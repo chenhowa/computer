@@ -1,5 +1,9 @@
 package computer
 
+import (
+	"math"
+)
+
 /*
 	Remember to check the pseudo-ops and psuedo-instructions!
 */
@@ -18,13 +22,21 @@ type instructionOperator interface {
 	load(reg uint, address uint16, m instructionReadMemory)
 	store(reg uint, address uint16, m instructionWriteMemory)
 	add(dest uint, reg1 uint, reg2 uint)
+	add_immediate(dest uint, reg uint, immediate uint32)
 	sub(dest uint, reg1 uint, reg2 uint)
 	bit_and(dest uint, reg1 uint, reg2 uint)
+	bit_and_immediate(dest uint, reg uint, immediate uint32)
 	bit_or(dest uint, reg1 uint, reg2 uint)
+	bit_or_immediate(dest uint, reg uint, immediate uint32)
+	bit_xor(dest uint, reg1 uint, reg2 uint)
+	bit_xor_immediate(dest uint, reg uint, immediate uint32)
 	left_shift(dest uint, reg uint)
 	right_shift(dest uint, reg uint, preserveSign bool)
 	multiply(dest uint, reg1 uint, reg2 uint)
 	divide(destDividend uint, destRem uint, reg1 uint, reg2 uint)
+	get(reg uint) uint32
+	zero(dest uint)
+	one(dest uint)
 }
 
 type instructionReadMemory interface {
@@ -53,28 +65,59 @@ func (ex *InstructionExecutor) executeInstruction() {
 
 }
 
-func (ex *InstructionExecutor) addImmediate() {
+func signExtendUint32WithBit(integer uint32, bit uint) uint32 {
+	bitValue := integer >> (bit - 1)
+	var mask uint32
+	var signExtended uint32
+	if max := math.MaxUint32; bitValue == 1 {
+		mask = uint32(max << (bit + 1))
+		signExtended = mask | integer
+	} else {
+		mask = uint32(max >> (32 - bit - 1))
+		signExtended = mask & integer
+	}
 
+	return signExtended
 }
 
-func (ex *InstructionExecutor) setLessThanImmediate() {
-
+func (ex *InstructionExecutor) addImmediate(dest uint, reg uint, immediate uint32) {
+	// 1. Sign extend the immediate based on the 12th bit
+	// 2. Add and ignore overflow.
+	ex.operator.add_immediate(dest, reg, signExtendUint32WithBit(immediate, 11))
 }
 
-func (ex *InstructionExecutor) setLessThanImmediateUnsigned() {
+func (ex *InstructionExecutor) setLessThanImmediate(dest uint, reg uint, immediate uint32) {
+	// 1. Sign extend the immediate based on the 12th bit
+	// 2. Compare as signed numbers
+	// 3. Place 1 or 0 in destination reg, based on result.
 
+	regValueLess := int32(ex.operator.get(reg)) < int32(signExtendUint32WithBit(immediate, 11))
+	if regValueLess {
+		ex.operator.one(dest)
+	} else {
+		ex.operator.zero(dest)
+	}
 }
 
-func (ex *InstructionExecutor) andImmmediate() {
-
+func (ex *InstructionExecutor) setLessThanImmediateUnsigned(dest uint, reg uint, immediate uint32) {
+	regValueLess := (ex.operator.get(reg)) < (signExtendUint32WithBit(immediate, 11))
+	if regValueLess {
+		ex.operator.one(dest)
+	} else {
+		ex.operator.zero(dest)
+	}
 }
 
-func (ex *InstructionExecutor) orImmediate() {
-
+func (ex *InstructionExecutor) andImmmediate(dest uint, reg uint, immediate uint32) {
+	ex.operator.bit_and_immediate(dest, reg, signExtendUint32WithBit(immediate, 11))
 }
 
-func (ex *InstructionExecutor) xorImmediate() {
+func (ex *InstructionExecutor) orImmediate(dest uint, reg uint, immediate uint32) {
+	ex.operator.bit_or_immediate(dest, reg, signExtendUint32WithBit(immediate, 11))
+}
 
+func (ex *InstructionExecutor) xorImmediate(dest uint, reg uint, immediate uint32) {
+	ex.operator.bit_xor_immediate(dest, reg, signExtendUint32WithBit(immediate, 11))
 }
 
 func (ex *InstructionExecutor) shiftLeftLogicalImmediate() {
@@ -201,4 +244,34 @@ func (ex *InstructionExecutor) storeByte() {
 
 }
 
-/* CONTINUE FROM 2.7 FOR ADDITIONAL INSTRUCTIONS */
+func (ex *InstructionExecutor) csrReadAndWrite() {
+
+}
+
+func (ex *InstructionExecutor) csrReadAndSet() {
+
+}
+
+func (ex *InstructionExecutor) csrReadAndClear() {
+
+}
+
+func (ex *InstructionExecutor) csrReadAndWriteImmediate() {
+
+}
+
+func (ex *InstructionExecutor) csrReadAndSetImmediate() {
+
+}
+
+func (ex *InstructionExecutor) csrReadAndClearImmediate() {
+
+}
+
+func (ex *InstructionExecutor) envCall() {
+
+}
+
+func (ex *InstructionExecutor) envBreak() {
+
+}
