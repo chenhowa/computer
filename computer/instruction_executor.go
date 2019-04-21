@@ -65,6 +65,7 @@ type instructionReadWriteMemory interface {
 	instructionWriteMemory
 }
 
+/*
 func (ex *RiscVInstructionExecutor) execute(memory instructionReadWriteMemory) {
 	instruction := ex.instructionManager.getInstruction(memory)
 	ex.instructionManager.incrementInstructionAddress()
@@ -73,7 +74,7 @@ func (ex *RiscVInstructionExecutor) execute(memory instructionReadWriteMemory) {
 
 func (ex *RiscVInstructionExecutor) executeInstruction(instruction uint32, memory instructionReadWriteMemory) {
 	blah
-}
+}*/
 
 func signExtendUint32WithBit(integer uint32, bit uint) uint32 {
 	bitValue := integer >> (bit - 1)
@@ -90,13 +91,13 @@ func signExtendUint32WithBit(integer uint32, bit uint) uint32 {
 	return signExtended
 }
 
-func (ex *RiscVInstructionExecutor) addImmediate(dest uint, reg uint, immediate uint32) {
+func (ex *RiscVInstructionExecutor) AddImmediate(dest uint, reg uint, immediate uint32) {
 	// 1. Sign extend the immediate based on the 12th bit
 	// 2. Add and ignore overflow.
 	ex.operator.add_immediate(dest, reg, signExtendUint32WithBit(immediate, 11))
 }
 
-func (ex *RiscVInstructionExecutor) setLessThanImmediate(dest uint, reg uint, immediate uint32) {
+func (ex *RiscVInstructionExecutor) SetLessThanImmediate(dest uint, reg uint, immediate uint32) {
 	// 1. Sign extend the immediate based on the 12th bit
 	// 2. Compare as signed numbers
 	// 3. Place 1 or 0 in destination reg, based on result.
@@ -108,7 +109,7 @@ func (ex *RiscVInstructionExecutor) setLessThanImmediate(dest uint, reg uint, im
 	}
 }
 
-func (ex *RiscVInstructionExecutor) setLessThanImmediateUnsigned(dest uint, reg uint, immediate uint32) {
+func (ex *RiscVInstructionExecutor) SetLessThanImmediateUnsigned(dest uint, reg uint, immediate uint32) {
 	regValueLess := (ex.operator.get(reg)) < (signExtendUint32WithBit(immediate, 11))
 	ex.operator.bit_and_immediate(dest, dest, 0)
 	if regValueLess {
@@ -116,27 +117,27 @@ func (ex *RiscVInstructionExecutor) setLessThanImmediateUnsigned(dest uint, reg 
 	}
 }
 
-func (ex *RiscVInstructionExecutor) andImmmediate(dest uint, reg uint, immediate uint32) {
+func (ex *RiscVInstructionExecutor) AndImmmediate(dest uint, reg uint, immediate uint32) {
 	ex.operator.bit_and_immediate(dest, reg, signExtendUint32WithBit(immediate, 11))
 }
 
-func (ex *RiscVInstructionExecutor) orImmediate(dest uint, reg uint, immediate uint32) {
+func (ex *RiscVInstructionExecutor) OrImmediate(dest uint, reg uint, immediate uint32) {
 	ex.operator.bit_or_immediate(dest, reg, signExtendUint32WithBit(immediate, 11))
 }
 
-func (ex *RiscVInstructionExecutor) xorImmediate(dest uint, reg uint, immediate uint32) {
+func (ex *RiscVInstructionExecutor) XorImmediate(dest uint, reg uint, immediate uint32) {
 	ex.operator.bit_xor_immediate(dest, reg, signExtendUint32WithBit(immediate, 11))
 }
 
-func (ex *RiscVInstructionExecutor) shiftLeftLogicalImmediate(dest uint, reg uint, immediate uint32) {
+func (ex *RiscVInstructionExecutor) ShiftLeftLogicalImmediate(dest uint, reg uint, immediate uint32) {
 	ex.operator.left_shift_immediate(dest, reg, immediate)
 }
 
-func (ex *RiscVInstructionExecutor) shiftRightLogicalImmediate(dest uint, reg uint, immediate uint32) {
+func (ex *RiscVInstructionExecutor) ShiftRightLogicalImmediate(dest uint, reg uint, immediate uint32) {
 	ex.operator.right_shift_immediate(dest, reg, immediate, false)
 }
 
-func (ex *RiscVInstructionExecutor) shiftRightArithmeticImmediate(dest uint, reg uint, immediate uint32) {
+func (ex *RiscVInstructionExecutor) ShiftRightArithmeticImmediate(dest uint, reg uint, immediate uint32) {
 	ex.operator.right_shift_immediate(dest, reg, immediate, true)
 }
 
@@ -145,22 +146,22 @@ func (ex *RiscVInstructionExecutor) shiftRightArithmeticImmediate(dest uint, reg
 	upper 20 bits of the destination register, with the lower 20 bits
 	of the destination register as 0
 */
-func (ex *RiscVInstructionExecutor) loadUpperImmediate(dest uint, immediate uint32) {
+func (ex *RiscVInstructionExecutor) LoadUpperImmediate(dest uint, immediate uint32) {
 	ex.operator.bit_and_immediate(dest, dest, 0)
 	ex.operator.bit_or_immediate(dest, dest, immediate<<12)
 }
 
-func (ex *RiscVInstructionExecutor) addUpperImmediateToPC(dest uint, immediate uint32) {
+func (ex *RiscVInstructionExecutor) AddUpperImmediateToPC(dest uint, immediate uint32) {
 	result := (immediate << 12) + uint32(ex.instructionManager.getInstructionAddress())
 	ex.operator.bit_and_immediate(dest, dest, 0)
 	ex.operator.bit_or_immediate(dest, dest, result)
 }
 
-func (ex *RiscVInstructionExecutor) add(dest uint, reg1 uint, reg2 uint) {
+func (ex *RiscVInstructionExecutor) Add(dest uint, reg1 uint, reg2 uint) {
 	ex.operator.add(dest, reg1, reg2)
 }
 
-func (ex *RiscVInstructionExecutor) setLessThan(dest uint, reg1 uint, reg2 uint) {
+func (ex *RiscVInstructionExecutor) SetLessThan(dest uint, reg1 uint, reg2 uint) {
 	reg1ValueLess := int32(ex.operator.get(reg1)) < int32(ex.operator.get(reg2))
 	ex.operator.bit_and_immediate(dest, dest, 0) // zero out destination
 	if reg1ValueLess {
@@ -168,7 +169,7 @@ func (ex *RiscVInstructionExecutor) setLessThan(dest uint, reg1 uint, reg2 uint)
 	}
 }
 
-func (ex *RiscVInstructionExecutor) setLessThanUnsigned(dest uint, reg1 uint, reg2 uint) {
+func (ex *RiscVInstructionExecutor) SetLessThanUnsigned(dest uint, reg1 uint, reg2 uint) {
 	reg1ValueLess := (ex.operator.get(reg1)) < ex.operator.get(reg2)
 	ex.operator.bit_and_immediate(dest, dest, 0)
 	if reg1ValueLess {
@@ -176,60 +177,60 @@ func (ex *RiscVInstructionExecutor) setLessThanUnsigned(dest uint, reg1 uint, re
 	}
 }
 
-func (ex *RiscVInstructionExecutor) and(dest uint, reg1 uint, reg2 uint) {
+func (ex *RiscVInstructionExecutor) And(dest uint, reg1 uint, reg2 uint) {
 	ex.operator.bit_and(dest, reg1, reg2)
 }
 
-func (ex *RiscVInstructionExecutor) or(dest uint, reg1 uint, reg2 uint) {
+func (ex *RiscVInstructionExecutor) Or(dest uint, reg1 uint, reg2 uint) {
 	ex.operator.bit_or(dest, reg1, reg2)
 }
 
-func (ex *RiscVInstructionExecutor) xor(dest uint, reg1 uint, reg2 uint) {
+func (ex *RiscVInstructionExecutor) Xor(dest uint, reg1 uint, reg2 uint) {
 	ex.operator.bit_xor(dest, reg1, reg2)
 }
 
-func (ex *RiscVInstructionExecutor) shiftLeftLogical(dest uint, reg uint, shiftreg uint) {
+func (ex *RiscVInstructionExecutor) ShiftLeftLogical(dest uint, reg uint, shiftreg uint) {
 	lowerFiveBits := ex.operator.get(shiftreg) & (math.MaxUint32 >> (32 - 5))
 	ex.operator.left_shift_immediate(dest, reg, lowerFiveBits)
 }
 
-func (ex *RiscVInstructionExecutor) shiftRightLogical(dest uint, reg uint, shiftreg uint) {
+func (ex *RiscVInstructionExecutor) ShiftRightLogical(dest uint, reg uint, shiftreg uint) {
 	lowerFiveBits := ex.operator.get(shiftreg) & (uint32(math.MaxUint32) >> (32 - 5))
 	ex.operator.right_shift_immediate(dest, reg, lowerFiveBits, false)
 }
 
-func (ex *RiscVInstructionExecutor) shiftRightArithmetic(dest uint, reg uint, shiftreg uint) {
+func (ex *RiscVInstructionExecutor) ShiftRightArithmetic(dest uint, reg uint, shiftreg uint) {
 	lowerFiveBits := ex.operator.get(shiftreg) & (math.MaxUint32 >> (32 - 5))
 	ex.operator.right_shift_immediate(dest, reg, lowerFiveBits, true)
 }
 
-func (ex *RiscVInstructionExecutor) nop() {
+func (ex *RiscVInstructionExecutor) Nop() {
 	// This instruction literally does nothing.
 	// In RISC-V, it can be encoded as ADDI x0, x0, 0,
 	// but there is no need for that here.
 }
 
-func (ex *RiscVInstructionExecutor) branchEqual() {
+func (ex *RiscVInstructionExecutor) BranchEqual() {
 
 }
 
-func (ex *RiscVInstructionExecutor) branchNotEqual() {
+func (ex *RiscVInstructionExecutor) BranchNotEqual() {
 
 }
 
-func (ex *RiscVInstructionExecutor) branchLessThan() {
+func (ex *RiscVInstructionExecutor) BranchLessThan() {
 
 }
 
-func (ex *RiscVInstructionExecutor) branchLessThanUnsigned() {
+func (ex *RiscVInstructionExecutor) BranchLessThanUnsigned() {
 
 }
 
-func (ex *RiscVInstructionExecutor) branchGreaterThanOrEqual() {
+func (ex *RiscVInstructionExecutor) BranchGreaterThanOrEqual() {
 
 }
 
-func (ex *RiscVInstructionExecutor) branchGreaterThanOrEqualUnsigned() {
+func (ex *RiscVInstructionExecutor) BranchGreaterThanOrEqualUnsigned() {
 
 }
 
@@ -238,7 +239,7 @@ func (ex *RiscVInstructionExecutor) branchGreaterThanOrEqualUnsigned() {
 	destination register and then adds the lower 20 bits of
 	the offset to the program counter (stored in the program counter)
 */
-func (ex *RiscVInstructionExecutor) jumpAndLink(dest uint, pcOffset uint32) {
+func (ex *RiscVInstructionExecutor) JumpAndLink(dest uint, pcOffset uint32) {
 	ex.operator.bit_and_immediate(dest, dest, 0)
 	ex.operator.bit_or_immediate(dest, dest, ex.instructionManager.getInstructionAddress())
 
@@ -252,7 +253,7 @@ func (ex *RiscVInstructionExecutor) jumpAndLink(dest uint, pcOffset uint32) {
 	to the value in the Base Register, sets the LSB of the result to 0,
 	It then sets the program counter to the result.
 */
-func (ex *RiscVInstructionExecutor) jumpAndLinkRegister(dest uint, basereg uint, pcOffset uint32) {
+func (ex *RiscVInstructionExecutor) JumpAndLinkRegister(dest uint, basereg uint, pcOffset uint32) {
 	ex.operator.bit_and_immediate(dest, dest, 0)
 	ex.operator.bit_or_immediate(dest, dest, ex.instructionManager.getInstructionAddress())
 
@@ -261,86 +262,86 @@ func (ex *RiscVInstructionExecutor) jumpAndLinkRegister(dest uint, basereg uint,
 	ex.instructionManager.loadInstructionAddress(address)
 }
 
-func (ex *RiscVInstructionExecutor) loadWord(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
+func (ex *RiscVInstructionExecutor) LoadWord(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
 	lower12Bits := offset & (uint32(math.MaxUint32) >> (32 - 12))
 	address := lower12Bits + ex.operator.get(reg)
 	ex.operator.load_word(dest, address, memory)
 }
 
-func (ex *RiscVInstructionExecutor) loadHalfWord(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
+func (ex *RiscVInstructionExecutor) LoadHalfWord(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
 	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
 	address := lower12Bits + ex.operator.get(reg)
 	ex.operator.load_halfword(dest, address, memory)
 
 }
 
-func (ex *RiscVInstructionExecutor) loadHalfWordUnsigned(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
+func (ex *RiscVInstructionExecutor) LoadHalfWordUnsigned(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
 	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
 	address := lower12Bits + ex.operator.get(reg)
 	ex.operator.load_halfword_unsigned(dest, address, memory)
 
 }
 
-func (ex *RiscVInstructionExecutor) loadByte(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
+func (ex *RiscVInstructionExecutor) LoadByte(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
 	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
 	address := lower12Bits + ex.operator.get(reg)
 	ex.operator.load_byte(dest, address, memory)
 
 }
 
-func (ex *RiscVInstructionExecutor) loadByteUnsigned(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
+func (ex *RiscVInstructionExecutor) LoadByteUnsigned(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
 	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
 	address := lower12Bits + ex.operator.get(reg)
 	ex.operator.load_byte_unsigned(dest, address, memory)
 
 }
 
-func (ex *RiscVInstructionExecutor) storeWord(src uint, reg uint, offset uint32, memory instructionWriteMemory) {
+func (ex *RiscVInstructionExecutor) StoreWord(src uint, reg uint, offset uint32, memory instructionWriteMemory) {
 	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
 	address := lower12Bits + ex.operator.get(reg)
 	ex.operator.store_word(src, address, memory)
 }
 
-func (ex *RiscVInstructionExecutor) storeHalfWord(src uint, reg uint, offset uint32, memory instructionWriteMemory) {
+func (ex *RiscVInstructionExecutor) StoreHalfWord(src uint, reg uint, offset uint32, memory instructionWriteMemory) {
 	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
 	address := lower12Bits + ex.operator.get(reg)
 	ex.operator.store_halfword(src, address, memory)
 }
 
-func (ex *RiscVInstructionExecutor) storeByte(src uint, reg uint, offset uint32, memory instructionWriteMemory) {
+func (ex *RiscVInstructionExecutor) StoreByte(src uint, reg uint, offset uint32, memory instructionWriteMemory) {
 	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
 	address := lower12Bits + ex.operator.get(reg)
 	ex.operator.store_byte(src, address, memory)
 }
 
-func (ex *RiscVInstructionExecutor) csrReadAndWrite() {
+func (ex *RiscVInstructionExecutor) CsrReadAndWrite() {
 
 }
 
-func (ex *RiscVInstructionExecutor) csrReadAndSet() {
+func (ex *RiscVInstructionExecutor) CsrReadAndSet() {
 
 }
 
-func (ex *RiscVInstructionExecutor) csrReadAndClear() {
+func (ex *RiscVInstructionExecutor) CsrReadAndClear() {
 
 }
 
-func (ex *RiscVInstructionExecutor) csrReadAndWriteImmediate() {
+func (ex *RiscVInstructionExecutor) CsrReadAndWriteImmediate() {
 
 }
 
-func (ex *RiscVInstructionExecutor) csrReadAndSetImmediate() {
+func (ex *RiscVInstructionExecutor) CsrReadAndSetImmediate() {
 
 }
 
-func (ex *RiscVInstructionExecutor) csrReadAndClearImmediate() {
+func (ex *RiscVInstructionExecutor) CsrReadAndClearImmediate() {
 
 }
 
-func (ex *RiscVInstructionExecutor) envCall() {
+func (ex *RiscVInstructionExecutor) EnvCall() {
 
 }
 
-func (ex *RiscVInstructionExecutor) envBreak() {
+func (ex *RiscVInstructionExecutor) EnvBreak() {
 
 }
