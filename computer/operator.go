@@ -1,5 +1,8 @@
 package computer
 
+/*Operator represents operations a set of 16(??) registers.
+
+ */
 type Operator struct {
 	registers [16]uint32
 	flags     uint16

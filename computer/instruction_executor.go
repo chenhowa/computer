@@ -8,17 +8,34 @@ import (
 	Remember to check the pseudo-ops and psuedo-instructions!
 */
 
-/*The RiscVInstructionExecutor is responsible for tracking the Current Instruction and
+/*The RiscVInstructionExecutor is responsible for translating
+a binary instruction into MESSAGES to the Operator and InstructionManager
 executing the instruction using an internal object.
 */
 type RiscVInstructionExecutor struct {
-	operator           instructionOperator
-	instructionAddress uint32
-	instruction        uint32
-	memory             instructionReadWriteMemory
+	operator instructionOperator
+	// A translator doesn't ned to know about memory...
+	//memory             instructionReadWriteMemory
+	instructionManager instructionManager
+}
+
+type instructionManager interface {
+	getInstructionAddress() uint32
+	getInstruction(memory instructionReadMemory) uint32
+	incrementInstructionAddress()
+	addOffset(offset uint32)
+	loadInstructionAddress(newAddress uint32)
 }
 
 type instructionOperator interface {
+	load_word(dest uint, address uint32, memory instructionReadMemory)
+	load_halfword(dest uint, address uint32, memory instructionReadMemory)
+	load_halfword_unsigned(dest uint, address uint32, memory instructionReadMemory)
+	load_byte(dest uint, address uint32, memory instructionReadMemory)
+	load_byte_unsigned(dest uint, address uint32, memory instructionReadMemory)
+	store_word(src uint, address uint32, memory instructionWriteMemory)
+	store_halfword(src uint, address uint32, memory instructionWriteMemory)
+	store_byte(src uint, address uint32, memory instructionWriteMemory)
 	add(dest uint, reg1 uint, reg2 uint)
 	add_immediate(dest uint, reg uint, immediate uint32)
 	sub(dest uint, reg1 uint, reg2 uint)
@@ -48,19 +65,14 @@ type instructionReadWriteMemory interface {
 	instructionWriteMemory
 }
 
-func (ex *RiscVInstructionExecutor) execute() {
-	ex.loadInstruction()
-	ex.executeInstruction()
+func (ex *RiscVInstructionExecutor) execute(memory instructionReadWriteMemory) {
+	instruction := ex.instructionManager.getInstruction(memory)
+	ex.instructionManager.incrementInstructionAddress()
+	ex.executeInstruction(instruction, memory)
 }
 
-func (ex *RiscVInstructionExecutor) loadInstruction() {
-	// does the type conversion truncate the top or bottom
-	// bits?
-	ex.instruction = ex.memory.Get(ex.instructionAddress)
-}
-
-func (ex *RiscVInstructionExecutor) executeInstruction() {
-
+func (ex *RiscVInstructionExecutor) executeInstruction(instruction uint32, memory instructionReadWriteMemory) {
+	blah
 }
 
 func signExtendUint32WithBit(integer uint32, bit uint) uint32 {
@@ -139,7 +151,7 @@ func (ex *RiscVInstructionExecutor) loadUpperImmediate(dest uint, immediate uint
 }
 
 func (ex *RiscVInstructionExecutor) addUpperImmediateToPC(dest uint, immediate uint32) {
-	result := (immediate << 12) + uint32(ex.instructionAddress)
+	result := (immediate << 12) + uint32(ex.instructionManager.getInstructionAddress())
 	ex.operator.bit_and_immediate(dest, dest, 0)
 	ex.operator.bit_or_immediate(dest, dest, result)
 }
@@ -222,96 +234,83 @@ func (ex *RiscVInstructionExecutor) branchGreaterThanOrEqualUnsigned() {
 }
 
 /*
-	This instruction saves (program counter + 4) into the
+	This instruction saves the address of the next instruction into the
 	destination register and then adds the lower 20 bits of
 	the offset to the program counter (stored in the program counter)
 */
 func (ex *RiscVInstructionExecutor) jumpAndLink(dest uint, pcOffset uint32) {
 	ex.operator.bit_and_immediate(dest, dest, 0)
-	ex.operator.bit_or_immediate(dest, dest, ex.instructionAddress+4)
+	ex.operator.bit_or_immediate(dest, dest, ex.instructionManager.getInstructionAddress())
 
 	lower20Bits := pcOffset & (uint32(math.MaxUint32) >> (32 - 20))
-	ex.instructionAddress += lower20Bits
+	ex.instructionManager.addOffset(lower20Bits)
 }
 
 /*
-	This instruction saves (program counter + 4) into the
+	This instruction saves the address of the next instruction into the
 	destination register. It then adds the lower 12 bits of the offset
 	to the value in the Base Register, sets the LSB of the result to 0,
 	It then sets the program counter to the result.
 */
 func (ex *RiscVInstructionExecutor) jumpAndLinkRegister(dest uint, basereg uint, pcOffset uint32) {
 	ex.operator.bit_and_immediate(dest, dest, 0)
-	ex.operator.bit_or_immediate(dest, dest, ex.instructionAddress+4)
+	ex.operator.bit_or_immediate(dest, dest, ex.instructionManager.getInstructionAddress())
 
 	lower12Bits := pcOffset & (uint32(math.MaxUint32) >> (32 - 12))
 	address := lower12Bits + ex.operator.get(basereg)
-	ex.instructionAddress = address
+	ex.instructionManager.loadInstructionAddress(address)
 }
 
-func (ex *RiscVInstructionExecutor) loadWord(dest uint, reg uint, offset uint32) {
+func (ex *RiscVInstructionExecutor) loadWord(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
 	lower12Bits := offset & (uint32(math.MaxUint32) >> (32 - 12))
 	address := lower12Bits + ex.operator.get(reg)
-	value := ex.memory.Get(address)
-	ex.operator.bit_and_immediate(dest, dest, 0)
-	ex.operator.bit_or_immediate(dest, dest, value)
+	ex.operator.load_word(dest, address, memory)
 }
 
-func (ex *RiscVInstructionExecutor) loadHalfWord(dest uint, reg uint, offset uint32) {
+func (ex *RiscVInstructionExecutor) loadHalfWord(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
 	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
 	address := lower12Bits + ex.operator.get(reg)
-	value := signExtendUint32WithBit((uint32(math.MaxUint32)>>(32-16))&ex.memory.Get(address), 15)
-	ex.operator.bit_and_immediate(dest, dest, 0)
-	ex.operator.bit_or_immediate(dest, dest, value)
+	ex.operator.load_halfword(dest, address, memory)
+
 }
 
-func (ex *RiscVInstructionExecutor) loadHalfWordUnsigned(dest uint, reg uint, offset uint32) {
+func (ex *RiscVInstructionExecutor) loadHalfWordUnsigned(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
 	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
 	address := lower12Bits + ex.operator.get(reg)
-	value := (uint32(math.MaxUint32) >> (32 - 16)) & ex.memory.Get(address)
-	ex.operator.bit_and_immediate(dest, dest, 0)
-	ex.operator.bit_or_immediate(dest, dest, value)
+	ex.operator.load_halfword_unsigned(dest, address, memory)
+
 }
 
-func (ex *RiscVInstructionExecutor) loadByte(dest uint, reg uint, offset uint32) {
+func (ex *RiscVInstructionExecutor) loadByte(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
 	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
 	address := lower12Bits + ex.operator.get(reg)
-	value := signExtendUint32WithBit((uint32(math.MaxUint32)>>(32-8))&ex.memory.Get(address), 7)
-	ex.operator.bit_and_immediate(dest, dest, 0)
-	ex.operator.bit_or_immediate(dest, dest, value)
+	ex.operator.load_byte(dest, address, memory)
+
 }
 
-func (ex *RiscVInstructionExecutor) loadByteUnsigned(dest uint, reg uint, offset uint32) {
+func (ex *RiscVInstructionExecutor) loadByteUnsigned(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
 	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
 	address := lower12Bits + ex.operator.get(reg)
-	value := (uint32(math.MaxUint32) >> (32 - 8)) & ex.memory.Get(address)
-	ex.operator.bit_and_immediate(dest, dest, 0)
-	ex.operator.bit_or_immediate(dest, dest, value)
+	ex.operator.load_byte_unsigned(dest, address, memory)
+
 }
 
-func (ex *RiscVInstructionExecutor) storeWord(src uint, reg uint, offset uint32) {
+func (ex *RiscVInstructionExecutor) storeWord(src uint, reg uint, offset uint32, memory instructionWriteMemory) {
 	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
 	address := lower12Bits + ex.operator.get(reg)
-	value := ex.operator.get(src)
-	ex.memory.Set(address, value)
+	ex.operator.store_word(src, address, memory)
 }
 
-func (ex *RiscVInstructionExecutor) storeHalfWord(src uint, reg uint, offset uint32) {
+func (ex *RiscVInstructionExecutor) storeHalfWord(src uint, reg uint, offset uint32, memory instructionWriteMemory) {
 	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
 	address := lower12Bits + ex.operator.get(reg)
-	oldValue := ex.memory.Get(address)
-	halfWord := ex.operator.get(src) & (uint32(math.MaxUint32) >> (32 - 16))
-	newValue := oldValue | halfWord
-	ex.memory.Set(address, newValue)
+	ex.operator.store_halfword(src, address, memory)
 }
 
-func (ex *RiscVInstructionExecutor) storeByte(src uint, reg uint, offset uint32) {
+func (ex *RiscVInstructionExecutor) storeByte(src uint, reg uint, offset uint32, memory instructionWriteMemory) {
 	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
 	address := lower12Bits + ex.operator.get(reg)
-	oldValue := ex.memory.Get(address)
-	halfWord := ex.operator.get(src) & (uint32(math.MaxUint32) >> (32 - 8))
-	newValue := oldValue | halfWord
-	ex.memory.Set(address, newValue)
+	ex.operator.store_byte(src, address, memory)
 }
 
 func (ex *RiscVInstructionExecutor) csrReadAndWrite() {
