@@ -1,32 +1,17 @@
 package computer
 
 type riscVBinaryInstructionExecutor struct {
-	parser binaryParser
+	factory executionFactory
 }
 
-type binaryParser interface {
-	parse(binary uint32) binaryParseResult
+type executionFactory interface {
+	produce(instruction uint32) executor
 }
 
-type binaryParseResult interface {
-	isRType() bool
-	isIType() bool
-	isSType() bool
-	isUType() bool
+type executor interface {
+	execute()
 }
 
 func (ex *riscVBinaryInstructionExecutor) execute(binaryInstruction uint32) {
-	parseResult := ex.parser.parse(binaryInstruction)
-
-	if parseResult.isRType() {
-
-	} else if parseResult.isIType() {
-
-	} else if parseResult.isSType() {
-
-	} else if parseResult.isUType() {
-
-	} else {
-
-	}
+	(ex.factory.produce(binaryInstruction)).execute()
 }
