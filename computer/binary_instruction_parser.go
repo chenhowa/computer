@@ -9,31 +9,50 @@ type riscVBinaryInstructionParser struct {
 	Will need to write a connector between this parser and the assembly executor
 	that will use it.
 */
+type opCode uint
+
+/*These constants represent the various opcodes of instructions
+ */
+const (
+	ImmArith opCode = iota + 1
+	LUI
+	AUIPC
+	RegArith
+	JAL
+	JALR
+	Branch
+	Load
+	Store
+	System
+)
 
 func (parser *riscVBinaryInstructionParser) parse(instruction uint32) riscVBinaryParseResult {
-	opcode := ((1 << 7) - 1) & instruction
+	opcode := opCode(((1 << 7) - 1) & instruction)
 	var result riscVBinaryParseResult
 
-	if opcode < 3 { // immediate arithmetic
+	if opcode < AUIPC+1 { // immediate arithmetic
 		result = parseAsI(instruction)
-	} else if opcode < 4 { // register-register arithmetic
+	} else if opcode < RegArith+1 { // register-register arithmetic
 		result = parseAsR(instruction)
-	} else if opcode < 5 { // jump and link
+	} else if opcode < JAL+1 { // jump and link
 		result = parseAsJ(instruction)
-	} else if opcode < 6 { // jump and link register
+	} else if opcode < JALR+1 { // jump and link register
 		result = parseAsI(instruction)
-	} else if opcode < 7 { // branch
+	} else if opcode < Branch+1 { // branch
 		result = parseAsB(instruction)
-	} else if opcode < 8 { // loads
+	} else if opcode < Load+1 { // loads
 		result = parseAsI(instruction)
-	} else if opcode < 9 { // stores
+	} else if opcode < Store+1 { // stores
 		result = parseAsS(instruction)
-	} else if opcode < 10 { // system (csr)
+	} else if opcode < System+1 { // system (csr)
 		result = parseAsI(instruction)
 	} else {
 		panic(fmt.Sprintf("unrecognized opcode %d", opcode))
 	}
 	result.errorIfInvalid()
+
+	// Tag with the opcode, which was already calculated
+	result.opCode = opcode
 
 	return result
 }
@@ -42,8 +61,8 @@ func (parser *riscVBinaryInstructionParser) parse(instruction uint32) riscVBinar
   from bit `start` to bit `end`. `start` is assumed to be less than `end`.
   The 0th bit is assumed to be the Least-Significant-Bit (LSB) of `number`
 
-  Examples: when `number` = 0b000011100, `start` = 1, `end` = 4, the return value will be 0b000001110 (as uint)
-			when `number` = 0b000011100, `start` = 0, `end` = 2, the return value will be 0b000000100 (as uint)
+  Examples: when `number` = 0b000011100, `start` = 1, `end` = 4, getBitsInInclusiveRange(number, start, end) = 0b000001110 (as uint)
+			when `number` = 0b000011100, `start` = 0, `end` = 2, getBitsInInclusiveRange(number, start, end) = 0b000000100 (as uint)
 */
 func getBitsInInclusiveRange(number uint, start uint, end uint) uint {
 	if start > end {
@@ -150,6 +169,7 @@ const (
 
 type riscVBinaryParseResult struct {
 	instructionType    instructionType
+	opCode             opCode
 	fiveBitRegister1   uint8
 	fiveBitRegister2   uint8
 	fiveBitDestination uint8
