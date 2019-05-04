@@ -17,7 +17,7 @@ type OpCode uint
 /*These constants represent the various opcodes of instructions
  */
 const (
-	ImmArith OpCode = iota + 1
+	ImmArith OpCode = iota
 	LUI
 	AUIPC
 	RegArith
@@ -160,12 +160,17 @@ func parseAsB(instruction uint32) RiscVBinaryParseResult {
 	return result
 }
 
+/* This type represents valid Instruction types for 32I RiscV, where each Instruction Type
+defines a format for representing the operands of the 32-bit instruction. The only way to
+know an instruction type is to check the OpCode of the instruction -- each OpCode is mapped
+to just one available Instruction Type.
+*/
 type InstructionType uint
 
 /*These constants represent the various available instruction types available in the RiscV instruction set (32 bits)
  */
 const (
-	R InstructionType = iota + 1 // the below instruction types are the base instruction types
+	R InstructionType = iota // the below instruction types are the base instruction types
 	I
 	S
 	U

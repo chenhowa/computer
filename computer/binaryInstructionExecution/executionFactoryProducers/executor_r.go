@@ -9,7 +9,7 @@ type validOperationR uint
 R-type instructions
 */
 const (
-	Add validOperationR = iota + 1
+	Add validOperationR = iota
 	SLT
 	SLTU
 	And
@@ -25,7 +25,7 @@ const (
 for an R-type instruction.
 */
 const (
-	F0 funct7 = iota + 1
+	F0 funct7 = iota
 	F1
 )
 

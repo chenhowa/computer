@@ -18,7 +18,7 @@ that are available for I-type instructions when Opcode is
 ImmArith
 */
 const (
-	AddI validOperationI = iota + 1
+	AddI validOperationI = iota
 	SLTI
 	SLTIU
 	AndI
@@ -32,14 +32,14 @@ const (
 that are available for I-type instructions when OpCode is JALR
 */
 const (
-	JALR validOperationI = iota + 1
+	JALR validOperationI = iota
 )
 
 /* These contstants represent the valid possible operations
 for I-type instructions when OpCode is LOAD
 */
 const (
-	LoadWord validOperationI = iota + 1
+	LoadWord validOperationI = iota
 	LoadHalfWord
 	LoadHalfWordUnsigned
 	LoadByte
@@ -50,7 +50,7 @@ const (
 for I-type instructions when OpCode is SYSTEM
 */
 const (
-	CSRRW validOperationI = iota + 1
+	CSRRW validOperationI = iota
 	CSRRS
 	CSRRC
 	CSRRWI

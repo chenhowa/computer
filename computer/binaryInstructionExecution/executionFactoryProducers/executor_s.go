@@ -22,7 +22,7 @@ type validOperationS uint
 instruction is S-type and OpCode is Store
 */
 const (
-	StoreWord validOperationS = iota + 1
+	StoreWord validOperationS = iota
 	StoreHalfWord
 	StoreByte
 )
