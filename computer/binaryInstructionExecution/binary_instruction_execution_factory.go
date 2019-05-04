@@ -84,8 +84,8 @@ func (factory *riscVBinaryInstructionExecutionFactory) produceJ(result Parser.Ri
 func (factory *riscVBinaryInstructionExecutionFactory) produceB(result Parser.RiscVBinaryParseResult, ex Producer.RiscVExecutor) binaryExecutor {
 
 	var executor = Producer.ExecutorB{
-		Executor: factory.executor
-		Result: result
+		Executor: factory.executor,
+		Result:   result,
 	}
 	// This works because Go does Pointer Escape analysis.
 	return &executor
@@ -95,7 +95,7 @@ func (factory *riscVBinaryInstructionExecutionFactory) produceS(result Parser.Ri
 
 	var executor = Producer.ExecutorS{
 		Executor: factory.executor,
-		Result: result
+		Result:   result,
 	}
 	// This works because Go does Pointer Escape analysis.
 	return &executor
