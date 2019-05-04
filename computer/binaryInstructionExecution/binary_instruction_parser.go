@@ -1,4 +1,4 @@
-package computer
+package binaryInstructionExecution
 
 import "fmt"
 
@@ -30,8 +30,10 @@ func (parser *riscVBinaryInstructionParser) parse(instruction uint32) riscVBinar
 	opcode := opCode(((1 << 7) - 1) & instruction)
 	var result riscVBinaryParseResult
 
-	if opcode < AUIPC+1 { // immediate arithmetic
+	if opcode < ImmArith+1 { // immediate arithmetic
 		result = parseAsI(instruction)
+	} else if opcode < AUIPC+1 {
+		result = parseAsU(instruction)
 	} else if opcode < RegArith+1 { // register-register arithmetic
 		result = parseAsR(instruction)
 	} else if opcode < JAL+1 { // jump and link
