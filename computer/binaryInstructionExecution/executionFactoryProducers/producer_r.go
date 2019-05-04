@@ -41,6 +41,8 @@ type ExecutorR struct {
 
 type funct7 uint
 
+/*Execute will execute the R-type instruction
+ */
 func (ex *ExecutorR) Execute() {
 	src1 := uint(ex.Result.FiveBitRegister1)
 	src2 := uint(ex.Result.FiveBitRegister2)

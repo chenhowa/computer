@@ -26,10 +26,13 @@ const (
 	ShiftLeftLI
 	ShiftRightLI
 	ShiftRightAI
+	JALR
 )
 
 type executionFunctionI func(ex RiscVExecutor, dest uint, reg uint, immediate uint32)
 
+/*Execute will execute the I-type instruction
+ */
 func (ex *ExecutorI) Execute() {
 	immediate := uint32(ex.Result.TwelveBitImmediate)
 	dest := uint(ex.Result.FiveBitDestination)
@@ -48,7 +51,9 @@ func (ex *ExecutorI) Execute() {
 			ShiftRightLI: (RiscVExecutor).shiftRightLogicalImmediate,
 			ShiftRightAI: (RiscVExecutor).shiftRightArithmeticImmediate,
 		},
-		Parser.LUI: map[validOperationI](executionFunctionI){},
+		Parser.JALR: map[validOperationI](executionFunctionI){
+			JALR: (RiscVExecutor).jumpAndLinkRegister,
+		},
 	}
 
 	if m, ok := decision[ex.Result.OpCode]; ok {

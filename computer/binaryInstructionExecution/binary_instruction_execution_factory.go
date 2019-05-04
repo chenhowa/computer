@@ -71,45 +71,32 @@ func (factory *riscVBinaryInstructionExecutionFactory) produceR(result Parser.Ri
 	return &executor
 }
 
-type executorJ struct {
-	executor Producer.RiscVExecutor
-}
-
-func (ex *executorJ) Execute() {
-
-}
-
 func (factory *riscVBinaryInstructionExecutionFactory) produceJ(result Parser.RiscVBinaryParseResult, ex Producer.RiscVExecutor) binaryExecutor {
 
-	var executor = executorJ{}
+	var executor = Producer.ExecutorJ{
+		Executor: ex,
+		Result:   result,
+	}
 	// This works because Go does Pointer Escape analysis.
 	return &executor
 }
 
-type executorB struct {
-	executor Producer.RiscVExecutor
-}
-
-func (ex *executorB) Execute() {
-
-}
 func (factory *riscVBinaryInstructionExecutionFactory) produceB(result Parser.RiscVBinaryParseResult, ex Producer.RiscVExecutor) binaryExecutor {
 
-	var executor = executorB{}
+	var executor = Producer.ExecutorB{
+		Executor: factory.executor
+		Result: result
+	}
 	// This works because Go does Pointer Escape analysis.
 	return &executor
 }
 
-type executorS struct {
-	executor Producer.RiscVExecutor
-}
-
-func (ex *executorS) Execute() {
-
-}
 func (factory *riscVBinaryInstructionExecutionFactory) produceS(result Parser.RiscVBinaryParseResult, ex Producer.RiscVExecutor) binaryExecutor {
 
-	var executor = executorS{}
+	var executor = Producer.ExecutorS{
+		Executor: factory.executor,
+		Result: result
+	}
 	// This works because Go does Pointer Escape analysis.
 	return &executor
 }

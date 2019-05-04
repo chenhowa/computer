@@ -11,6 +11,8 @@ type ExecutorU struct {
 	Result   Parser.RiscVBinaryParseResult
 }
 
+/*Execute will execute the U-type instruction
+ */
 func (ex *ExecutorU) Execute() {
 	immediate := uint32(ex.Result.TwentyBitImmediate)
 	dest := uint(ex.Result.FiveBitDestination)
