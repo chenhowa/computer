@@ -1,4 +1,4 @@
-package computer
+package execution
 
 import (
 	"math"
@@ -14,7 +14,7 @@ executing the instruction using an internal object.
 */
 type RiscVInstructionExecutor struct {
 	operator instructionOperator
-	// A translator doesn't ned to know about memory...
+	// A translator doesn't need to know about memory...
 	//memory             instructionReadWriteMemory
 	instructionManager instructionManager
 }
@@ -57,7 +57,7 @@ type instructionReadMemory interface {
 }
 
 type instructionWriteMemory interface {
-	Set(address uint32, value uint32)
+	Set(address uint32, value uint32, bitsToSet uint)
 }
 
 type instructionReadWriteMemory interface {
@@ -76,8 +76,13 @@ func (ex *RiscVInstructionExecutor) executeInstruction(instruction uint32, memor
 	blah
 }*/
 
+/*signExtendUint32WithBit takes a uint32 `integer` and a `bit` number
+(0 - 31 are the valid values) and copies the bit value at `bit` into
+all the bits {n | 32 > n > `bit`} of `integer`, and then returns a copy
+of that value
+*/
 func signExtendUint32WithBit(integer uint32, bit uint) uint32 {
-	bitValue := integer >> (bit - 1)
+	bitValue := ((1 << bit) & integer) >> bit
 	var mask uint32
 	var signExtended uint32
 	if max := math.MaxUint32; bitValue == 1 {
@@ -89,6 +94,10 @@ func signExtendUint32WithBit(integer uint32, bit uint) uint32 {
 	}
 
 	return signExtended
+}
+
+func (ex *RiscVInstructionExecutor) get(reg uint) uint32 {
+	return ex.operator.get(reg)
 }
 
 func (ex *RiscVInstructionExecutor) AddImmediate(dest uint, reg uint, immediate uint32) {
