@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-/*signExtendUint32WithBit takes a uint32 `integer` and a `bit` number
+/*SignExtendUint32WithBit takes a uint32 `integer` and a `bit` number
 (0 - 31 are the valid values) and copies the bit value at `bit` into
 all the bits {n | 32 > n > `bit`} of `integer`, and then returns a copy
 of that value
