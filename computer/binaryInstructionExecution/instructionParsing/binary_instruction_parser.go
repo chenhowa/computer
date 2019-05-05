@@ -137,7 +137,7 @@ func parseAsS(instruction uint32) RiscVBinaryParseResult {
 	result.FiveBitRegister1 = uint8(getBitsInInclusiveRange(uintInstruction, 15, 19))
 	result.FiveBitRegister2 = uint8(getBitsInInclusiveRange(uintInstruction, 20, 24))
 
-	lowerFiveBits := getBitsInInclusiveRange(uintInstruction, 0, 4)
+	lowerFiveBits := getBitsInInclusiveRange(uintInstruction, 7, 11)
 	upper7Bits := getBitsInInclusiveRange(uintInstruction, 25, 31)
 	result.TwelveBitImmediate = uint16(lowerFiveBits | (upper7Bits << 5))
 
@@ -153,14 +153,14 @@ func parseAsB(instruction uint32) RiscVBinaryParseResult {
 
 	bits1To4 := getBitsInInclusiveRange(uintInstruction, 8, 11)
 	bits5To10 := getBitsInInclusiveRange(uintInstruction, 25, 30)
-	bit11 := getBitsInInclusiveRange(uintInstruction, 11, 11)
+	bit11 := getBitsInInclusiveRange(uintInstruction, 7, 7)
 	bit12 := getBitsInInclusiveRange(uintInstruction, 31, 31)
 	result.TwelveBitImmediate = uint16(bits1To4 | (bits5To10 << 4) | (bit11 << 10) | (bit12 << 11))
 
 	return result
 }
 
-/* This type represents valid Instruction types for 32I RiscV, where each Instruction Type
+/*InstructionType represents valid Instruction types for 32I RiscV, where each Instruction Type
 defines a format for representing the operands of the 32-bit instruction. The only way to
 know an instruction type is to check the OpCode of the instruction -- each OpCode is mapped
 to just one available Instruction Type.
@@ -229,5 +229,5 @@ func (result RiscVBinaryParseResult) errorIfInvalid() {
 }
 
 func xIsGreaterThanYBits(x uint, y uint) bool {
-	return x >= (1 >> y)
+	return x >= (1 << y)
 }
