@@ -1,8 +1,7 @@
 package execution
 
 import (
-	"fmt"
-	"math"
+	Utils "github.com/chenhowa/os/computer/binaryInstructionExecution/bitUtils"
 )
 
 /*Operator represents operations a set of 16(??) registers.
@@ -183,17 +182,6 @@ func (c *Operator) divide(dest_dividend uint, dest_rem uint, reg1 uint, reg2 uin
 	c.registers[dest_rem] = remainder
 }
 
-func keepBitsInInclusiveRange(num uint32, start uint, end uint) uint32 {
-	if start < end {
-		panic(fmt.Sprintf("keepBitsInRange: start > end, %d > %d", start, end))
-	}
-
-	majorMask := uint32(1<<(end+1)) - 1
-	minorMask := uint32(math.MaxUint32) << (start + 1)
-
-	return (num & majorMask & minorMask)
-}
-
 func (c *Operator) load_word(dest uint, address uint16, memory ReadMemory) {
 	value := memory.Get(address)
 	c.registers[dest] = value
@@ -201,22 +189,22 @@ func (c *Operator) load_word(dest uint, address uint16, memory ReadMemory) {
 
 func (c *Operator) load_halfword(dest uint, address uint16, memory ReadMemory) {
 	value := memory.Get(address)
-	c.registers[dest] = signExtendUint32WithBit(keepBitsInInclusiveRange(value, 0, 15), 15)
+	c.registers[dest] = Utils.SignExtendUint32WithBit(Utils.KeepBitsInInclusiveRange(value, 0, 15), 15)
 }
 
 func (c *Operator) load_halfword_unsigned(dest uint, address uint16, memory ReadMemory) {
 	value := memory.Get(address)
-	c.registers[dest] = keepBitsInInclusiveRange(value, 0, 15)
+	c.registers[dest] = Utils.KeepBitsInInclusiveRange(value, 0, 15)
 }
 
 func (c *Operator) load_byte(dest uint, address uint16, memory ReadMemory) {
 	value := memory.Get(address)
-	c.registers[dest] = signExtendUint32WithBit(keepBitsInInclusiveRange(value, 0, 7), 7)
+	c.registers[dest] = Utils.SignExtendUint32WithBit(Utils.KeepBitsInInclusiveRange(value, 0, 7), 7)
 }
 
 func (c *Operator) load_byte_unsigned(dest uint, address uint16, memory ReadMemory) {
 	value := memory.Get(address)
-	c.registers[dest] = keepBitsInInclusiveRange(value, 0, 7)
+	c.registers[dest] = Utils.KeepBitsInInclusiveRange(value, 0, 7)
 }
 
 func (c *Operator) store_word(src uint, address uint16, memory WriteMemory) {

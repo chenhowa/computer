@@ -2,6 +2,8 @@ package execution
 
 import (
 	"math"
+
+	Utils "github.com/chenhowa/os/computer/binaryInstructionExecution/bitUtils"
 )
 
 /*
@@ -76,26 +78,6 @@ func (ex *RiscVInstructionExecutor) executeInstruction(instruction uint32, memor
 	blah
 }*/
 
-/*signExtendUint32WithBit takes a uint32 `integer` and a `bit` number
-(0 - 31 are the valid values) and copies the bit value at `bit` into
-all the bits {n | 32 > n > `bit`} of `integer`, and then returns a copy
-of that value
-*/
-func signExtendUint32WithBit(integer uint32, bit uint) uint32 {
-	bitValue := ((1 << bit) & integer) >> bit
-	var mask uint32
-	var signExtended uint32
-	if max := math.MaxUint32; bitValue == 1 {
-		mask = uint32(max << (bit + 1))
-		signExtended = mask | integer
-	} else {
-		mask = uint32(max >> (32 - bit - 1))
-		signExtended = mask & integer
-	}
-
-	return signExtended
-}
-
 func (ex *RiscVInstructionExecutor) get(reg uint) uint32 {
 	return ex.operator.get(reg)
 }
@@ -103,7 +85,7 @@ func (ex *RiscVInstructionExecutor) get(reg uint) uint32 {
 func (ex *RiscVInstructionExecutor) AddImmediate(dest uint, reg uint, immediate uint32) {
 	// 1. Sign extend the immediate based on the 12th bit
 	// 2. Add and ignore overflow.
-	ex.operator.add_immediate(dest, reg, signExtendUint32WithBit(immediate, 11))
+	ex.operator.add_immediate(dest, reg, Utils.SignExtendUint32WithBit(immediate, 11))
 }
 
 func (ex *RiscVInstructionExecutor) SetLessThanImmediate(dest uint, reg uint, immediate uint32) {
@@ -111,7 +93,7 @@ func (ex *RiscVInstructionExecutor) SetLessThanImmediate(dest uint, reg uint, im
 	// 2. Compare as signed numbers
 	// 3. Place 1 or 0 in destination reg, based on result.
 
-	regValueLess := int32(ex.operator.get(reg)) < int32(signExtendUint32WithBit(immediate, 11))
+	regValueLess := int32(ex.operator.get(reg)) < int32(Utils.SignExtendUint32WithBit(immediate, 11))
 	ex.operator.bit_and_immediate(dest, dest, 0) // zero out destination
 	if regValueLess {
 		ex.operator.bit_or_immediate(dest, dest, 1)
@@ -119,7 +101,7 @@ func (ex *RiscVInstructionExecutor) SetLessThanImmediate(dest uint, reg uint, im
 }
 
 func (ex *RiscVInstructionExecutor) SetLessThanImmediateUnsigned(dest uint, reg uint, immediate uint32) {
-	regValueLess := (ex.operator.get(reg)) < (signExtendUint32WithBit(immediate, 11))
+	regValueLess := (ex.operator.get(reg)) < (Utils.SignExtendUint32WithBit(immediate, 11))
 	ex.operator.bit_and_immediate(dest, dest, 0)
 	if regValueLess {
 		ex.operator.bit_or_immediate(dest, dest, 1)
@@ -127,15 +109,15 @@ func (ex *RiscVInstructionExecutor) SetLessThanImmediateUnsigned(dest uint, reg 
 }
 
 func (ex *RiscVInstructionExecutor) AndImmmediate(dest uint, reg uint, immediate uint32) {
-	ex.operator.bit_and_immediate(dest, reg, signExtendUint32WithBit(immediate, 11))
+	ex.operator.bit_and_immediate(dest, reg, Utils.SignExtendUint32WithBit(immediate, 11))
 }
 
 func (ex *RiscVInstructionExecutor) OrImmediate(dest uint, reg uint, immediate uint32) {
-	ex.operator.bit_or_immediate(dest, reg, signExtendUint32WithBit(immediate, 11))
+	ex.operator.bit_or_immediate(dest, reg, Utils.SignExtendUint32WithBit(immediate, 11))
 }
 
 func (ex *RiscVInstructionExecutor) XorImmediate(dest uint, reg uint, immediate uint32) {
-	ex.operator.bit_xor_immediate(dest, reg, signExtendUint32WithBit(immediate, 11))
+	ex.operator.bit_xor_immediate(dest, reg, Utils.SignExtendUint32WithBit(immediate, 11))
 }
 
 func (ex *RiscVInstructionExecutor) ShiftLeftLogicalImmediate(dest uint, reg uint, immediate uint32) {
