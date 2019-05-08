@@ -1,4 +1,4 @@
-package execution
+package operators
 
 import (
 	Utils "github.com/chenhowa/os/computer/binaryInstructionExecution/bitUtils"
@@ -10,6 +10,17 @@ import (
 type Operator struct {
 	registers [16]uint32
 	flags     uint16
+}
+
+/*MakeOperator is a construction function for the Operator struct
+ */
+func MakeOperator(registers [16]uint32, flags uint16) Operator {
+	op := Operator{
+		registers: registers,
+		flags:     flags,
+	}
+
+	return op
 }
 
 /*ReadMemory is an interface that reads a uint32 data
@@ -24,6 +35,11 @@ value to a memory address (possibly virtualized)
 */
 type WriteMemory interface {
 	Set(address uint16, value uint32, bitsToSet uint)
+}
+
+type ReadWriteMemory interface {
+	ReadMemory
+	WriteMemory
 }
 
 func (c *Operator) Get(reg uint) uint32 {

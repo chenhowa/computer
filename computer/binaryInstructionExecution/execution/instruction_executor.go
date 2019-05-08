@@ -82,12 +82,18 @@ func (ex *RiscVInstructionExecutor) get(reg uint) uint32 {
 	return ex.operator.get(reg)
 }
 
+/*AddImmediate adds an immediate to a value in a register, and stores the result
+in the destination register
+*/
 func (ex *RiscVInstructionExecutor) AddImmediate(dest uint, reg uint, immediate uint32) {
 	// 1. Sign extend the immediate based on the 12th bit
 	// 2. Add and ignore overflow.
 	ex.operator.addImmediate(dest, reg, Utils.SignExtendUint32WithBit(immediate, 11))
 }
 
+/*SetLessThanImmediate compares the value in a register to the sign-extended immediate (using the 11th bit
+to sign extend), and sets 1 if the register value is less, otherwise it sets 0
+*/
 func (ex *RiscVInstructionExecutor) SetLessThanImmediate(dest uint, reg uint, immediate uint32) {
 	// 1. Sign extend the immediate based on the 12th bit
 	// 2. Compare as signed numbers
@@ -100,6 +106,9 @@ func (ex *RiscVInstructionExecutor) SetLessThanImmediate(dest uint, reg uint, im
 	}
 }
 
+/*SetLessThanImmediateUnsigned compares the value in a register to the unsigned immediate,
+and sets 1 if the register value is less, otherwise it sets 0
+*/
 func (ex *RiscVInstructionExecutor) SetLessThanImmediateUnsigned(dest uint, reg uint, immediate uint32) {
 	regValueLess := (ex.operator.get(reg)) < (Utils.SignExtendUint32WithBit(immediate, 11))
 	ex.operator.andImmediate(dest, dest, 0)
