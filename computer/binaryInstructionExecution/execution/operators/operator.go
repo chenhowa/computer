@@ -146,35 +146,6 @@ func (c *Operator) Bit_not(dest uint, reg1 uint) {
 }
 
 /*
-	This function should flag the msb
-*/
-func (c *Operator) Left_shift(dest uint, reg uint) {
-	var operand = c.registers[reg]
-	//var msb = operand >> 31;
-	var result = operand << 1
-
-	c.registers[dest] = result
-}
-
-/*
-	This function should flag the lsb
-*/
-func (c *Operator) Right_shift(dest uint, reg uint, preserve_sign bool) {
-	var operand = c.registers[reg]
-	//var lsb = operand & 1;
-	var result uint32
-
-	// Go automatically arithmetic shifts if the result is signed.
-	if preserve_sign {
-		result = uint32(int32(operand) >> 1)
-	} else {
-		result = operand >> 1
-	}
-
-	c.registers[dest] = result
-}
-
-/*
 	This function should flag the overflow.
 */
 func (c *Operator) Multiply(dest uint, reg1 uint, reg2 uint) {

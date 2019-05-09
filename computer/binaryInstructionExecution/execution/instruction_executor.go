@@ -83,10 +83,11 @@ func (ex *RiscVInstructionExecutor) get(reg uint) uint32 {
 }
 
 /*AddImmediate adds an immediate to a value in a register, and stores the result
-in the destination register
+in the destination register. The immediate value is `immediate` 12 least-significant
+bits, sign-extended based on the 12th bit.
 */
 func (ex *RiscVInstructionExecutor) AddImmediate(dest uint, reg uint, immediate uint32) {
-	// 1. Sign extend the immediate based on the 12th bit
+	// 1. Sign extend the immediate based on the 11th bit
 	// 2. Add and ignore overflow.
 	ex.operator.addImmediate(dest, reg, Utils.SignExtendUint32WithBit(immediate, 11))
 }

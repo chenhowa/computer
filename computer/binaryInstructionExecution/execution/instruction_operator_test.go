@@ -85,31 +85,6 @@ func (suite *OperatorSuite) TestBitXor() {
 	suite.AssertRegisterEquals(5, 5)
 }
 
-func (suite *OperatorSuite) TestLeftShift() {
-	var assert = assert.New(suite.T())
-
-	suite.operator.leftShift(0, 1, 3)
-	suite.operator.storeWord(0, 8, &suite.memory)
-	assert.Equal(suite.memory.val, uint32(8))
-}
-
-func (suite *OperatorSuite) TestRightShiftLogical() {
-	var assert = assert.New(suite.T())
-
-	suite.operator.rightShift(0, 15, 2, false)
-	suite.operator.storeWord(0, 5, &suite.memory)
-	assert.Equal(suite.memory.val, uint32(3))
-}
-
-func (suite *OperatorSuite) TestRightShiftArithmetic() {
-	var assert = assert.New(suite.T())
-	suite.memory.val = 1 << 31
-	suite.operator.loadWord(1, 5, &suite.memory)
-	suite.operator.rightShift(0, 1, 2, true)
-	suite.operator.storeWord(0, 5, &suite.memory)
-	assert.Equal(suite.memory.val, uint32((1<<29)|(1<<30)|(1<<31)))
-}
-
 func (suite *OperatorSuite) TestMultiply() {
 	var assert = assert.New(suite.T())
 	suite.operator.multiply(0, 2, 3)

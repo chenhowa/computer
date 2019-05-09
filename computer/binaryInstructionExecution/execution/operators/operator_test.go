@@ -111,31 +111,6 @@ func (suite *OperatorSuite) TestBitNot() {
 	suite.AssertRegisterEquals(0, 2)
 }
 
-func (suite *OperatorSuite) TestLeftShift() {
-	var assert = assert.New(suite.T())
-
-	suite.operator.Left_shift(0, 1, 3)
-	suite.operator.Store(0, 5, &suite.memory)
-	assert.Equal(suite.memory.val, uint32(8))
-}
-
-func (suite *OperatorSuite) TestRightShiftLogical() {
-	var assert = assert.New(suite.T())
-
-	suite.operator.Right_shift(0, 15, 2, false)
-	suite.operator.Store(0, 5, &suite.memory)
-	assert.Equal(suite.memory.val, uint32(3))
-}
-
-func (suite *OperatorSuite) TestRightShiftArithmetic() {
-	var assert = assert.New(suite.T())
-	suite.memory.val = 1 << 31
-	suite.operator.Load(1, 5, &suite.memory)
-	suite.operator.Right_shift(0, 1, 2, true)
-	suite.operator.Store(0, 5, &suite.memory)
-	assert.Equal(suite.memory.val, uint32((1<<29)|(1<<30)|(1<<31)))
-}
-
 func (suite *OperatorSuite) TestMultiply() {
 	var assert = assert.New(suite.T())
 	suite.operator.Multiply(0, 2, 3)
