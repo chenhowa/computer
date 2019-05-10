@@ -36,7 +36,7 @@ func TestInstructionExecutorSuite(t *testing.T) {
 }
 
 func (suite *InstructionExecutorSuite) SetupTest() {
-	operator := makeAdaptedOperator([16]uint32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15})
+	operator := makeAdaptedOperator([32]uint32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17})
 	suite.executor = RiscVInstructionExecutor{
 		operator: &operator,
 	}
@@ -128,7 +128,7 @@ func (suite *InstructionExecutorSuite) TestLoadHalfWordUnsigned() {
 	assert.Equal(uint32(16), suite.executor.get(0))
 }
 
-func (suite *InstructionExecutorSuite) TestByteWord() {
+func (suite *InstructionExecutorSuite) TestLoadByte() {
 	suite.memory.val = 14
 	assert := assert.New(suite.T())
 
@@ -172,7 +172,7 @@ func (suite *InstructionExecutorSuite) TestLoadByteUnsigned() {
 
 	//test 12-bit sign extension is not occurring if 12th bit is 0
 	suite.memory.val = 16
-	suite.memory.On("Get", uint32(1<<11)).Return(-1) // due to overflow.
+	suite.memory.On("Get", uint32(1<<11)).Return() // due to overflow.
 	suite.executor.LoadByteUnsigned(0, 1, uint32(math.MaxUint32-(1<<11)), suite.memory)
 	suite.memory.AssertCalled(suite.T(), "Get", uint32(1<<11))
 	assert.Equal(uint32(16), suite.executor.get(0))
@@ -180,16 +180,78 @@ func (suite *InstructionExecutorSuite) TestLoadByteUnsigned() {
 }
 
 func (suite *InstructionExecutorSuite) TestStoreWord() {
-	//assert := assert.New(suite.T())
+	assert := assert.New(suite.T())
 
+	//basic test of storing a word
+	suite.memory.val = 0
+	suite.memory.On("Set", uint32(13), uint32(14), uint(32))
+	suite.executor.StoreWord(14, 1, 12, suite.memory)
+	suite.memory.AssertCalled(suite.T(), "Set", uint32(13), uint32(14), uint(32))
+	assert.Equal(uint32(14), suite.memory.val)
+
+	//test 12-bit sign extension is occurring if 12th bit is 1
+	suite.memory.val = 0
+	suite.memory.On("Set", uint32(0), uint32(15), uint(32)) // due to overflow.
+	suite.executor.StoreWord(15, 1, uint32(math.MaxUint32), suite.memory)
+	suite.memory.AssertCalled(suite.T(), "Set", uint32(0), uint32(15), uint(32))
+	assert.Equal(uint32(15), suite.memory.val)
+
+	//test 12-bit sign extension is not occurring if 12th bit is 0
+	suite.memory.val = 0
+	suite.memory.On("Set", uint32(1<<11), uint32(16), uint(32)) // due to overflow.
+	suite.executor.StoreWord(16, 1, uint32(math.MaxUint32-(1<<11)), suite.memory)
+	suite.memory.AssertCalled(suite.T(), "Set", uint32(1<<11), uint32(16), uint(32))
+	assert.Equal(uint32(16), suite.memory.val)
 }
 
 func (suite *InstructionExecutorSuite) TestStoreHalfWord() {
+	assert := assert.New(suite.T())
 
+	//basic test of storing a word
+	suite.memory.val = 0
+	suite.memory.On("Set", uint32(13), uint32(14), uint(32))
+	suite.executor.StoreHalfWord(14, 1, 12, suite.memory)
+	suite.memory.AssertCalled(suite.T(), "Set", uint32(13), uint32(14), uint(32))
+	assert.Equal(uint32(14), suite.memory.val)
+
+	//test 12-bit sign extension is occurring if 12th bit is 1
+	suite.memory.val = 0
+	suite.memory.On("Set", uint32(0), uint32(15), uint(32)) // due to overflow.
+	suite.executor.StoreHalfWord(15, 1, uint32(math.MaxUint32), suite.memory)
+	suite.memory.AssertCalled(suite.T(), "Set", uint32(0), uint32(15), uint(32))
+	assert.Equal(uint32(15), suite.memory.val)
+
+	//test 12-bit sign extension is not occurring if 12th bit is 0
+	suite.memory.val = 0
+	suite.memory.On("Set", uint32(1<<11), uint32(16), uint(32)) // due to overflow.
+	suite.executor.StoreHalfWord(16, 1, uint32(math.MaxUint32-(1<<11)), suite.memory)
+	suite.memory.AssertCalled(suite.T(), "Set", uint32(1<<11), uint32(16), uint(32))
+	assert.Equal(uint32(16), suite.memory.val)
 }
 
 func (suite *InstructionExecutorSuite) TestStoreByte() {
+	assert := assert.New(suite.T())
 
+	//basic test of storing a word
+	suite.memory.val = 0
+	suite.memory.On("Set", uint32(13), uint32(14), uint(32))
+	suite.executor.StoreByte(14, 1, 12, suite.memory)
+	suite.memory.AssertCalled(suite.T(), "Set", uint32(13), uint32(14), uint(32))
+	assert.Equal(uint32(14), suite.memory.val)
+
+	//test 12-bit sign extension is occurring if 12th bit is 1
+	suite.memory.val = 0
+	suite.memory.On("Set", uint32(0), uint32(15), uint(32)) // due to overflow.
+	suite.executor.StoreByte(15, 1, uint32(math.MaxUint32), suite.memory)
+	suite.memory.AssertCalled(suite.T(), "Set", uint32(0), uint32(15), uint(32))
+	assert.Equal(uint32(15), suite.memory.val)
+
+	//test 12-bit sign extension is not occurring if 12th bit is 0
+	suite.memory.val = 0
+	suite.memory.On("Set", uint32(1<<11), uint32(16), uint(32)) // due to overflow.
+	suite.executor.StoreByte(16, 1, uint32(math.MaxUint32-(1<<11)), suite.memory)
+	suite.memory.AssertCalled(suite.T(), "Set", uint32(1<<11), uint32(16), uint(32))
+	assert.Equal(uint32(16), suite.memory.val)
 }
 
 func (suite *InstructionExecutorSuite) TestAddImmediate() {

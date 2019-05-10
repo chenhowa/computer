@@ -13,7 +13,7 @@ type adaptedOperator struct {
 	operator *Operator.Operator
 }
 
-func makeAdaptedOperator(regs [16]uint32) adaptedOperator {
+func makeAdaptedOperator(regs [32]uint32) adaptedOperator {
 	op := Operator.MakeOperator(regs, 0)
 
 	adapted := adaptedOperator{

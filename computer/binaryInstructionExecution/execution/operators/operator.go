@@ -4,17 +4,17 @@ import (
 	Utils "github.com/chenhowa/os/computer/binaryInstructionExecution/bitUtils"
 )
 
-/*Operator represents operations a set of 16(??) registers.
+/*Operator represents operations a set of 32 registers.
 
  */
 type Operator struct {
-	registers [16]uint32
+	registers [32]uint32
 	flags     uint16
 }
 
 /*MakeOperator is a construction function for the Operator struct
  */
-func MakeOperator(registers [16]uint32, flags uint16) Operator {
+func MakeOperator(registers [32]uint32, flags uint16) Operator {
 	op := Operator{
 		registers: registers,
 		flags:     flags,

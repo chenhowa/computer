@@ -27,7 +27,7 @@ func (m *MemoryMock) Set(address uint32, val uint32, bits uint) {
 }
 
 func (suite *OperatorSuite) SetupTest() {
-	suite.operator = makeAdaptedOperator([16]uint32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15})
+	suite.operator = makeAdaptedOperator([32]uint32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15})
 
 	suite.memory = MemoryMock{}
 }
