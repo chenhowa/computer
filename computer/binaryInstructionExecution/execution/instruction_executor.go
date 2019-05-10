@@ -263,55 +263,76 @@ func (ex *RiscVInstructionExecutor) JumpAndLinkRegister(dest uint, basereg uint,
 	ex.instructionManager.loadInstructionAddress(address)
 }
 
+/*LoadWord compiles an address from sign-extended lower 12 bits of offset, adds that to uint32 stored in
+register `reg`, and then reads 1 Word from that address from memory into the destination register `dest`
+*/
 func (ex *RiscVInstructionExecutor) LoadWord(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
-	lower12Bits := offset & (uint32(math.MaxUint32) >> (32 - 12))
-	address := lower12Bits + ex.operator.get(reg)
+	lower12Bits := offset & Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), 0, 11)
+	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.operator.get(reg)
 	ex.operator.loadWord(dest, address, memory)
 }
 
+/*LoadHalfWord compiles an address from sign-extended lower 12 bits of offset, adds that to uint32 stored in
+register `reg`, and then reads 1 Sign-extended HalfWord from that address from memory into the destination register `dest`
+*/
 func (ex *RiscVInstructionExecutor) LoadHalfWord(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
-	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
-	address := lower12Bits + ex.operator.get(reg)
+	lower12Bits := offset & Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), 0, 11)
+	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.operator.get(reg)
 	ex.operator.loadHalfWord(dest, address, memory)
 
 }
 
+/*LoadHalfWordUnsigned compiles an address from sign-extended lower 12 bits of offset, adds that to uint32 stored in
+register `reg`, and then reads 1 HalfWord from that address from memory into the destination register `dest`
+*/
 func (ex *RiscVInstructionExecutor) LoadHalfWordUnsigned(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
-	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
-	address := lower12Bits + ex.operator.get(reg)
+	lower12Bits := offset & Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), 0, 11)
+	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.operator.get(reg)
 	ex.operator.loadHalfWordUnsigned(dest, address, memory)
 
 }
 
+/*LoadByte compiles an address from sign-extended lower 12 bits of offset, adds that to uint32 stored in
+register `reg`, and then reads 1 Sign-extended Byte from that address from memory into the destination register `dest`
+*/
 func (ex *RiscVInstructionExecutor) LoadByte(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
-	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
-	address := lower12Bits + ex.operator.get(reg)
+	lower12Bits := offset & Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), 0, 11)
+	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.operator.get(reg)
 	ex.operator.loadByte(dest, address, memory)
 
 }
 
+/*LoadByteUnsigned compiles an address from sign-extended lower 12 bits of offset, adds that to uint32 stored in
+register `reg`, and then reads 1 Byte from that address from memory into the destination register `dest`
+*/
 func (ex *RiscVInstructionExecutor) LoadByteUnsigned(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
-	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
-	address := lower12Bits + ex.operator.get(reg)
+	lower12Bits := offset & Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), 0, 11)
+	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.operator.get(reg)
 	ex.operator.loadByteUnsigned(dest, address, memory)
 
 }
 
+/*StoreWord compiles an address from the sign-extended lower 12 bits of `offset`, adds that to the uint32 stored
+in register `reg`, and then stores 4 Bytes from the register `src` into memory at the calculated 32-bit address*/
 func (ex *RiscVInstructionExecutor) StoreWord(src uint, reg uint, offset uint32, memory instructionWriteMemory) {
-	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
-	address := lower12Bits + ex.operator.get(reg)
+	lower12Bits := offset & Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), 0, 11)
+	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.operator.get(reg)
 	ex.operator.storeWord(src, address, memory)
 }
 
+/*StoreHalfWord compiles an address from the sign-extended lower 12 bits of `offset`, adds that to the uint32 stored
+in register `reg`, and then stores 2 Bytes from the register `src` into memory at the calculated 32-bit address*/
 func (ex *RiscVInstructionExecutor) StoreHalfWord(src uint, reg uint, offset uint32, memory instructionWriteMemory) {
-	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
-	address := lower12Bits + ex.operator.get(reg)
+	lower12Bits := offset & Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), 0, 11)
+	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.operator.get(reg)
 	ex.operator.storeHalfWord(src, address, memory)
 }
 
+/*StoreByte compiles an address from the sign-extended lower 12 bits of `offset`, adds that to the uint32 stored
+in register `reg`, and then stores 1 Byte from the register `src` into memory at the calculated 32-bit address*/
 func (ex *RiscVInstructionExecutor) StoreByte(src uint, reg uint, offset uint32, memory instructionWriteMemory) {
-	lower12Bits := offset & uint32(math.MaxUint32) >> (32 - 12)
-	address := lower12Bits + ex.operator.get(reg)
+	lower12Bits := offset & Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), 0, 11)
+	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.operator.get(reg)
 	ex.operator.storeByte(src, address, memory)
 }
 
