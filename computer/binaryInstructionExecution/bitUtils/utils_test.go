@@ -37,6 +37,12 @@ func (suite *UtilsSuite) TestSignExtension() {
 	assert.Equal(uint32(5), SignExtendUint32WithBit(5, 3))
 }
 
+func (suite *UtilsSuite) TestSignExtension2() {
+	assert := assert.New(suite.T())
+
+	assert.Equal(uint32((1<<11)-1), SignExtendUint32WithBit(KeepBitsInInclusiveRange(math.MaxUint32, 0, 10), 11))
+}
+
 func (suite *UtilsSuite) TestKeepBitsInclusiveRange() {
 	assert := assert.New(suite.T())
 

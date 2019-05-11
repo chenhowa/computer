@@ -10,8 +10,8 @@ import (
 	Remember to check the pseudo-ops and psuedo-instructions!
 */
 
-/*The RiscVInstructionExecutor is responsible for translating
-a binary instruction into MESSAGES to the Operator and InstructionManager
+/*The RiscVInstructionExecutor is responsible for taking the operands of
+a binary instruction and turning them into MESSAGES to the Operator and InstructionManager
 executing the instruction using an internal object.
 */
 type RiscVInstructionExecutor struct {
@@ -78,7 +78,14 @@ func (ex *RiscVInstructionExecutor) executeInstruction(instruction uint32, memor
 	blah
 }*/
 
-func (ex *RiscVInstructionExecutor) get(reg uint) uint32 {
+/*Get allows caller to read the value of register `reg`. In RiscV, any of the 32 registers can be read,
+but the 0 register cannot be written to -- the value of the 0 register is always 0
+*/
+func (ex *RiscVInstructionExecutor) Get(reg uint) uint32 {
+	if reg == 0 {
+		return 0
+	}
+
 	return ex.operator.get(reg)
 }
 
@@ -118,20 +125,29 @@ func (ex *RiscVInstructionExecutor) SetLessThanImmediateUnsigned(dest uint, reg 
 	}
 }
 
-func (ex *RiscVInstructionExecutor) AndImmmediate(dest uint, reg uint, immediate uint32) {
+/*AndImmediate takes the `immediate`, sign-extends it with 12th bit, does a bit-wise AND with
+the value in the register `reg`, and places the result in the register `dest` */
+func (ex *RiscVInstructionExecutor) AndImmediate(dest uint, reg uint, immediate uint32) {
 	ex.operator.andImmediate(dest, reg, Utils.SignExtendUint32WithBit(immediate, 11))
 }
 
+/*OrImmediate takes the `immediate`, sign-extends it with 12th bit, does a bit-wise OR with
+the value in the register `reg`, and places the result in the register `dest` */
 func (ex *RiscVInstructionExecutor) OrImmediate(dest uint, reg uint, immediate uint32) {
 	ex.operator.orImmediate(dest, reg, Utils.SignExtendUint32WithBit(immediate, 11))
 }
 
+/*XorImmediate takes the `immediate`, sign-extends it with 12th bit, does a bit-wise XOR with
+the value in the register `reg`, and places the result in the register `dest` */
 func (ex *RiscVInstructionExecutor) XorImmediate(dest uint, reg uint, immediate uint32) {
 	ex.operator.xorImmediate(dest, reg, Utils.SignExtendUint32WithBit(immediate, 11))
 }
 
+/*ShiftLeftLogicalImmediate takes the lowest 5 bits of `immediate`, and left-shifts the value
+in register `reg` by that 5-bit amount*/
 func (ex *RiscVInstructionExecutor) ShiftLeftLogicalImmediate(dest uint, reg uint, immediate uint32) {
-	ex.operator.leftShiftImmediate(dest, reg, immediate)
+	shiftAmt := Utils.KeepBitsInInclusiveRange(immediate, 0, 4)
+	ex.operator.leftShiftImmediate(dest, reg, shiftAmt)
 }
 
 func (ex *RiscVInstructionExecutor) ShiftRightLogicalImmediate(dest uint, reg uint, immediate uint32) {
@@ -160,6 +176,10 @@ func (ex *RiscVInstructionExecutor) AddUpperImmediateToPC(dest uint, immediate u
 
 func (ex *RiscVInstructionExecutor) Add(dest uint, reg1 uint, reg2 uint) {
 	ex.operator.add(dest, reg1, reg2)
+}
+
+func (ex *RiscVInstructionExecutor) Sub(dest uint, reg1 uint, reg2 uint) {
+	// ?????
 }
 
 func (ex *RiscVInstructionExecutor) SetLessThan(dest uint, reg1 uint, reg2 uint) {
