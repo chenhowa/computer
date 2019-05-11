@@ -439,3 +439,21 @@ func (suite *InstructionExecutorSuite) TestAdd() {
 	suite.executor.Add(30, 1, 2)
 	suite.assertRegisterEquals(30, 1)
 }
+
+func (suite *InstructionExecutorSuite) TestSub() {
+	//Basic Test
+	suite.executor.Sub(30, 3, 1)
+	suite.assertRegisterEquals(30, 2)
+
+	//Advanced test that checks overflow
+	suite.executor.Sub(30, 0, 1)
+	suite.assertRegisterEquals(30, math.MaxUint32)
+}
+
+func (suite *InstructionExecutorSuite) TestSetLessThan() {
+
+}
+
+func (suite *InstructionExecutorSuite) TestSetLessThanUnsigned() {
+
+}
