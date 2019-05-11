@@ -38,7 +38,7 @@ func TestInstructionExecutorSuite(t *testing.T) {
 }
 
 func (suite *InstructionExecutorSuite) SetupTest() {
-	operator := makeAdaptedOperator([32]uint32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17})
+	operator := makeAdaptedOperator([32]uint32{24, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17})
 	suite.executor = RiscVInstructionExecutor{
 		operator: &operator,
 	}
@@ -381,5 +381,61 @@ func (suite *InstructionExecutorSuite) TestLeftShiftLogicalImmediate() {
 	// Test with number that uses upper 27 bits as well as lower 5 bits
 	suite.executor.ShiftLeftLogicalImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5)) // 16 + 32
 	suite.assertRegisterEquals(30, 1<<16)
+}
 
+func (suite *InstructionExecutorSuite) TestRightShiftLogicalImmediate() {
+	//Basic Test
+	suite.executor.ShiftRightLogicalImmediate(30, 15, 2)
+	suite.assertRegisterEquals(30, 15>>2)
+
+	// Test with number that uses upper 27 bits as well as lower 5 bits, where MSB is 0
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 30)
+	suite.LoadMemoryIntoRegisterX(1)
+	suite.executor.ShiftRightLogicalImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5)) // 16 + 32
+	suite.assertRegisterEquals(30, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 14))
+
+	// Test with number that uses upper 27 bits as well as lower 5 bits, where MSB is 1
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 17, 31)
+	suite.LoadMemoryIntoRegisterX(1)
+	suite.executor.ShiftRightLogicalImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5)) // 16 + 32
+	suite.assertRegisterEquals(30, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 15))
+}
+
+func (suite *InstructionExecutorSuite) TestRightShiftArithmeticImmediate() {
+	//Basic Test
+	suite.executor.ShiftRightArithmeticImmediate(30, 15, 2)
+	suite.assertRegisterEquals(30, 15>>2)
+
+	// Test with number that uses upper 27 bits as well as lower 5 bits, where MSB is 0
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 30)
+	suite.LoadMemoryIntoRegisterX(1)
+	suite.executor.ShiftRightArithmeticImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5)) // 16 + 32
+	suite.assertRegisterEquals(30, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 14))
+
+	// Test with number that uses upper 27 bits as well as lower 5 bits, where MSB is 1
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 17, 31)
+	suite.LoadMemoryIntoRegisterX(1)
+	suite.executor.ShiftRightArithmeticImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5)) // 16 + 32
+	suite.assertRegisterEquals(30, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 31))
+}
+
+func (suite *InstructionExecutorSuite) TestLUI() {
+	suite.executor.LoadUpperImmediate(1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 25))
+	suite.assertRegisterEquals(1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 13, 31))
+}
+
+func (suite *InstructionExecutorSuite) TestAUIPC() {
+	suite.assertRegisterEquals(0, 5)
+}
+
+func (suite *InstructionExecutorSuite) TestAdd() {
+	//Basic Test
+	suite.executor.Add(30, 1, 2)
+	suite.assertRegisterEquals(30, 3)
+
+	//Advanced test that checks overflow
+	suite.memory.val = math.MaxUint32
+	suite.LoadMemoryIntoRegisterX(1)
+	suite.executor.Add(30, 1, 2)
+	suite.assertRegisterEquals(30, 1)
 }

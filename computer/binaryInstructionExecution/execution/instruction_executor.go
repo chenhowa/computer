@@ -144,36 +144,45 @@ func (ex *RiscVInstructionExecutor) XorImmediate(dest uint, reg uint, immediate 
 }
 
 /*ShiftLeftLogicalImmediate takes the lowest 5 bits of `immediate`, and left-shifts the value
-in register `reg` by that 5-bit amount*/
+in register `reg` by that 5-bit amount, and places the result in register `dest`*/
 func (ex *RiscVInstructionExecutor) ShiftLeftLogicalImmediate(dest uint, reg uint, immediate uint32) {
 	shiftAmt := Utils.KeepBitsInInclusiveRange(immediate, 0, 4)
 	ex.operator.leftShiftImmediate(dest, reg, shiftAmt)
 }
 
+/*ShiftRightLogicalImmediate takes the lowest 5 bits of `immediate`, and logical right-shifts the value
+in register `reg` by that 5-bit amount, and places the result in register `dest`*/
 func (ex *RiscVInstructionExecutor) ShiftRightLogicalImmediate(dest uint, reg uint, immediate uint32) {
-	ex.operator.rightShiftImmediate(dest, reg, immediate, false)
+	shiftAmt := Utils.KeepBitsInInclusiveRange(immediate, 0, 4)
+	ex.operator.rightShiftImmediate(dest, reg, shiftAmt, false)
 }
 
+/*ShiftRightArithmeticImmediate takes the lowest 5 bits of `immediate`, and arithmetic right-shifts the value
+in register `reg` by that 5-bit amount, and places the result in register `dest`*/
 func (ex *RiscVInstructionExecutor) ShiftRightArithmeticImmediate(dest uint, reg uint, immediate uint32) {
-	ex.operator.rightShiftImmediate(dest, reg, immediate, true)
+	shiftAmt := Utils.KeepBitsInInclusiveRange(immediate, 0, 4)
+	ex.operator.rightShiftImmediate(dest, reg, shiftAmt, true)
 }
 
-/*
-	Takes the lower 20 bits of the immediate and loads them into the
-	upper 20 bits of the destination register, with the lower 20 bits
-	of the destination register as 0
+/*LoadUpperImmediate takes the lower 20 bits of `immediate` and loads them into the
+upper 20 bits of the register `dest`, with the lower 12 bits of `dest` set to 0
 */
 func (ex *RiscVInstructionExecutor) LoadUpperImmediate(dest uint, immediate uint32) {
 	ex.operator.andImmediate(dest, dest, 0)
 	ex.operator.orImmediate(dest, dest, immediate<<12)
 }
 
+/*AddUpperImmediateToPC takes the lower 20 bits of `immediate`, left-shifts by 12 bits, and then adds this
+offset to the value in the Program Counter (PC), and places the result in the register `dest`*/
 func (ex *RiscVInstructionExecutor) AddUpperImmediateToPC(dest uint, immediate uint32) {
 	result := (immediate << 12) + uint32(ex.instructionManager.getInstructionAddress())
 	ex.operator.andImmediate(dest, dest, 0)
 	ex.operator.orImmediate(dest, dest, result)
 }
 
+/*Add take the values in register `reg1` and `reg2`, adds them together (ignoring overflow), and writes
+the lower 32 bits into register `dest`
+*/
 func (ex *RiscVInstructionExecutor) Add(dest uint, reg1 uint, reg2 uint) {
 	ex.operator.add(dest, reg1, reg2)
 }
