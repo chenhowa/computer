@@ -16,6 +16,8 @@ type ExecutorMemoryMock struct {
 	val uint32
 }
 
+const resultRegister = 30
+
 type InstructionExecutorSuite struct {
 	suite.Suite
 	executor RiscVInstructionExecutor
@@ -58,9 +60,9 @@ func (suite *InstructionExecutorSuite) TestLoadWord_Basic() {
 
 	// basic test of loading a word
 	suite.memory.On("Get", uint32(13))
-	suite.executor.LoadWord(30, 1, 12, suite.memory)
+	suite.executor.LoadWord(resultRegister, 1, 12, suite.memory)
 	suite.memory.AssertCalled(suite.T(), "Get", uint32(13))
-	suite.assertRegisterEquals(30, uint32(15))
+	suite.assertRegisterEquals(resultRegister, uint32(15))
 }
 
 func (suite *InstructionExecutorSuite) TestLoadWord_Advanced() {
@@ -69,16 +71,16 @@ func (suite *InstructionExecutorSuite) TestLoadWord_Advanced() {
 	//test 12-bit sign extension is occurring if 12th bit is 1
 	suite.memory.val = 15
 	suite.memory.On("Get", uint32(0)).Return() // duet to overflow.
-	suite.executor.LoadWord(30, 1, uint32(math.MaxUint32), suite.memory)
+	suite.executor.LoadWord(resultRegister, 1, uint32(math.MaxUint32), suite.memory)
 	suite.memory.AssertCalled(suite.T(), "Get", uint32(0))
-	suite.assertRegisterEquals(30, uint32(15))
+	suite.assertRegisterEquals(resultRegister, uint32(15))
 
 	//test 12-bit sign extension is not occurring if 12th bit is 0
 	suite.memory.val = 16
 	suite.memory.On("Get", uint32(1<<11)).Return() // due to overflow.
-	suite.executor.LoadWord(30, 1, uint32(math.MaxUint32-(1<<11)), suite.memory)
+	suite.executor.LoadWord(resultRegister, 1, uint32(math.MaxUint32-(1<<11)), suite.memory)
 	suite.memory.AssertCalled(suite.T(), "Get", uint32(1<<11))
-	suite.assertRegisterEquals(30, uint32(16))
+	suite.assertRegisterEquals(resultRegister, uint32(16))
 }
 
 func (suite *InstructionExecutorSuite) TestLoadHalfWord() {
@@ -86,23 +88,23 @@ func (suite *InstructionExecutorSuite) TestLoadHalfWord() {
 
 	// basic test of loading a word
 	suite.memory.On("Get", uint32(13))
-	suite.executor.LoadHalfWord(30, 1, 12, suite.memory)
+	suite.executor.LoadHalfWord(resultRegister, 1, 12, suite.memory)
 	suite.memory.AssertCalled(suite.T(), "Get", uint32(13))
-	suite.assertRegisterEquals(30, uint32(14))
+	suite.assertRegisterEquals(resultRegister, uint32(14))
 
 	//test 12-bit sign extension is occurring if 12th bit is 1
 	suite.memory.val = 15
 	suite.memory.On("Get", uint32(0)).Return() // duet to overflow.
-	suite.executor.LoadHalfWord(30, 1, uint32(math.MaxUint32), suite.memory)
+	suite.executor.LoadHalfWord(resultRegister, 1, uint32(math.MaxUint32), suite.memory)
 	suite.memory.AssertCalled(suite.T(), "Get", uint32(0))
-	suite.assertRegisterEquals(30, uint32(15))
+	suite.assertRegisterEquals(resultRegister, uint32(15))
 
 	//test 12-bit sign extension is not occurring if 12th bit is 0
 	suite.memory.val = 16
 	suite.memory.On("Get", uint32(1<<11)).Return() // due to overflow.
-	suite.executor.LoadHalfWord(30, 1, uint32(math.MaxUint32-(1<<11)), suite.memory)
+	suite.executor.LoadHalfWord(resultRegister, 1, uint32(math.MaxUint32-(1<<11)), suite.memory)
 	suite.memory.AssertCalled(suite.T(), "Get", uint32(1<<11))
-	suite.assertRegisterEquals(30, uint32(16))
+	suite.assertRegisterEquals(resultRegister, uint32(16))
 }
 
 func (suite *InstructionExecutorSuite) TestLoadHalfWordUnsigned() {
@@ -110,23 +112,23 @@ func (suite *InstructionExecutorSuite) TestLoadHalfWordUnsigned() {
 
 	// basic test of loading a word
 	suite.memory.On("Get", uint32(13))
-	suite.executor.LoadHalfWordUnsigned(30, 1, 12, suite.memory)
+	suite.executor.LoadHalfWordUnsigned(resultRegister, 1, 12, suite.memory)
 	suite.memory.AssertCalled(suite.T(), "Get", uint32(13))
-	suite.assertRegisterEquals(30, uint32(14))
+	suite.assertRegisterEquals(resultRegister, uint32(14))
 
 	//test 12-bit sign extension is occurring if 12th bit is 1
 	suite.memory.val = 15
 	suite.memory.On("Get", uint32(0)).Return() // duet to overflow.
-	suite.executor.LoadHalfWordUnsigned(30, 1, uint32(math.MaxUint32), suite.memory)
+	suite.executor.LoadHalfWordUnsigned(resultRegister, 1, uint32(math.MaxUint32), suite.memory)
 	suite.memory.AssertCalled(suite.T(), "Get", uint32(0))
-	suite.assertRegisterEquals(30, uint32(15))
+	suite.assertRegisterEquals(resultRegister, uint32(15))
 
 	//test 12-bit sign extension is not occurring if 12th bit is 0
 	suite.memory.val = 16
 	suite.memory.On("Get", uint32(1<<11)).Return() // due to overflow.
-	suite.executor.LoadHalfWordUnsigned(30, 1, uint32(math.MaxUint32-(1<<11)), suite.memory)
+	suite.executor.LoadHalfWordUnsigned(resultRegister, 1, uint32(math.MaxUint32-(1<<11)), suite.memory)
 	suite.memory.AssertCalled(suite.T(), "Get", uint32(1<<11))
-	suite.assertRegisterEquals(30, uint32(16))
+	suite.assertRegisterEquals(resultRegister, uint32(16))
 }
 
 func (suite *InstructionExecutorSuite) TestLoadByte() {
@@ -134,23 +136,23 @@ func (suite *InstructionExecutorSuite) TestLoadByte() {
 	// basic test of loading a word
 	suite.memory.val = 14
 	suite.memory.On("Get", uint32(13))
-	suite.executor.LoadByte(30, 1, 12, suite.memory)
+	suite.executor.LoadByte(resultRegister, 1, 12, suite.memory)
 	suite.memory.AssertCalled(suite.T(), "Get", uint32(13))
-	suite.assertRegisterEquals(30, uint32(14))
+	suite.assertRegisterEquals(resultRegister, uint32(14))
 
 	//test 12-bit sign extension is occurring if 12th bit is 1
 	suite.memory.val = 15
 	suite.memory.On("Get", uint32(0)).Return() // duet to overflow.
-	suite.executor.LoadByte(30, 1, uint32(math.MaxUint32), suite.memory)
+	suite.executor.LoadByte(resultRegister, 1, uint32(math.MaxUint32), suite.memory)
 	suite.memory.AssertCalled(suite.T(), "Get", uint32(0))
-	suite.assertRegisterEquals(30, uint32(15))
+	suite.assertRegisterEquals(resultRegister, uint32(15))
 
 	//test 12-bit sign extension is not occurring if 12th bit is 0
 	suite.memory.val = 16
 	suite.memory.On("Get", uint32(1<<11)).Return() // due to overflow.
-	suite.executor.LoadByte(30, 1, uint32(math.MaxUint32-(1<<11)), suite.memory)
+	suite.executor.LoadByte(resultRegister, 1, uint32(math.MaxUint32-(1<<11)), suite.memory)
 	suite.memory.AssertCalled(suite.T(), "Get", uint32(1<<11))
-	suite.assertRegisterEquals(30, uint32(16))
+	suite.assertRegisterEquals(resultRegister, uint32(16))
 }
 
 func (suite *InstructionExecutorSuite) TestLoadByteUnsigned() {
@@ -158,23 +160,23 @@ func (suite *InstructionExecutorSuite) TestLoadByteUnsigned() {
 
 	// basic test of loading a word
 	suite.memory.On("Get", uint32(13))
-	suite.executor.LoadByteUnsigned(30, 1, 12, suite.memory)
+	suite.executor.LoadByteUnsigned(resultRegister, 1, 12, suite.memory)
 	suite.memory.AssertCalled(suite.T(), "Get", uint32(13))
-	suite.assertRegisterEquals(30, uint32(14))
+	suite.assertRegisterEquals(resultRegister, uint32(14))
 
 	//test 12-bit sign extension is occurring if 12th bit is 1
 	suite.memory.val = 15
 	suite.memory.On("Get", uint32(0)).Return() // duet to overflow.
-	suite.executor.LoadByteUnsigned(30, 1, uint32(math.MaxUint32), suite.memory)
+	suite.executor.LoadByteUnsigned(resultRegister, 1, uint32(math.MaxUint32), suite.memory)
 	suite.memory.AssertCalled(suite.T(), "Get", uint32(0))
-	suite.assertRegisterEquals(30, uint32(15))
+	suite.assertRegisterEquals(resultRegister, uint32(15))
 
 	//test 12-bit sign extension is not occurring if 12th bit is 0
 	suite.memory.val = 16
 	suite.memory.On("Get", uint32(1<<11)).Return() // due to overflow.
-	suite.executor.LoadByteUnsigned(30, 1, uint32(math.MaxUint32-(1<<11)), suite.memory)
+	suite.executor.LoadByteUnsigned(resultRegister, 1, uint32(math.MaxUint32-(1<<11)), suite.memory)
 	suite.memory.AssertCalled(suite.T(), "Get", uint32(1<<11))
-	suite.assertRegisterEquals(30, uint32(16))
+	suite.assertRegisterEquals(resultRegister, uint32(16))
 }
 
 func (suite *InstructionExecutorSuite) TestStoreWord() {
@@ -260,12 +262,12 @@ func (suite *InstructionExecutorSuite) LoadMemoryIntoRegisterX(x uint) {
 func (suite *InstructionExecutorSuite) TestAddImmediate() {
 
 	// Test that sign-extension of 12th bit works when it is 1
-	suite.executor.AddImmediate(30, 1, 1<<11)
-	suite.assertRegisterEquals(30, Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 31)+1)
+	suite.executor.AddImmediate(resultRegister, 1, 1<<11)
+	suite.assertRegisterEquals(resultRegister, Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 31)+1)
 
 	// Test that sign-extension fo 12th bit works when it is 0
-	suite.executor.AddImmediate(30, 1, 1<<10)
-	suite.assertRegisterEquals(30, uint32((1<<10)+1))
+	suite.executor.AddImmediate(resultRegister, 1, 1<<10)
+	suite.assertRegisterEquals(resultRegister, uint32((1<<10)+1))
 }
 
 func (suite *InstructionExecutorSuite) TestSLTI() {
@@ -283,15 +285,15 @@ func (suite *InstructionExecutorSuite) TestSLTI() {
 	suite.assertRegisterEquals(1, math.MaxUint32-1)
 	// this is -2 in two's complement
 	// compared to -1 in two's complement after sign extension
-	suite.executor.SetLessThanImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 11)) // compared to -1 in two's complement after sign extension
-	suite.assertRegisterEquals(30, 1)
+	suite.executor.SetLessThanImmediate(resultRegister, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 11)) // compared to -1 in two's complement after sign extension
+	suite.assertRegisterEquals(resultRegister, 1)
 
 	// Test that sign extension does not occur when 12th bit is 0
 	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 31)
 	suite.LoadMemoryIntoRegisterX(1)
-	suite.assertRegisterEquals(1, math.MaxUint32-1)                                                  // -1 in two's complement
-	suite.executor.SetLessThanImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 10)) // this is some positive number, since no sign extension
-	suite.assertRegisterEquals(30, 1)
+	suite.assertRegisterEquals(1, math.MaxUint32-1)                                                              // -1 in two's complement
+	suite.executor.SetLessThanImmediate(resultRegister, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 10)) // this is some positive number, since no sign extension
+	suite.assertRegisterEquals(resultRegister, 1)
 }
 
 func (suite *InstructionExecutorSuite) TestSLTIUnsigned() {
@@ -308,115 +310,115 @@ func (suite *InstructionExecutorSuite) TestSLTIUnsigned() {
 	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 31)
 	suite.LoadMemoryIntoRegisterX(1)
 	suite.assertRegisterEquals(1, math.MaxUint32-1)
-	suite.executor.SetLessThanImmediateUnsigned(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 11))
-	suite.assertRegisterEquals(30, 1)
+	suite.executor.SetLessThanImmediateUnsigned(resultRegister, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 11))
+	suite.assertRegisterEquals(resultRegister, 1)
 
 	// Test that sign extension does not occur when 12th bit is 0
 	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 31)
 	suite.LoadMemoryIntoRegisterX(1)
 	suite.assertRegisterEquals(1, math.MaxUint32-1)
-	suite.executor.SetLessThanImmediateUnsigned(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 10))
-	suite.assertRegisterEquals(30, 0)
+	suite.executor.SetLessThanImmediateUnsigned(resultRegister, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 10))
+	suite.assertRegisterEquals(resultRegister, 0)
 }
 
 func (suite *InstructionExecutorSuite) TestAndImmediate() {
 	// Basic test
-	suite.executor.AndImmediate(30, 15, 30)
-	suite.assertRegisterEquals(30, 14)
+	suite.executor.AndImmediate(resultRegister, 15, 30)
+	suite.assertRegisterEquals(resultRegister, 14)
 
 	// Test with 11th bit
 	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 31)
 	suite.LoadMemoryIntoRegisterX(1)
-	suite.executor.AndImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 11))
-	suite.assertRegisterEquals(30, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 31))
+	suite.executor.AndImmediate(resultRegister, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 11))
+	suite.assertRegisterEquals(resultRegister, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 31))
 
 	// Test without 11th bit
 	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 31)
 	suite.LoadMemoryIntoRegisterX(1)
-	suite.executor.AndImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 10))
-	suite.assertRegisterEquals(30, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 10))
+	suite.executor.AndImmediate(resultRegister, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 10))
+	suite.assertRegisterEquals(resultRegister, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 10))
 }
 
 func (suite *InstructionExecutorSuite) TestOrImmediate() {
 	// Basic test
-	suite.executor.OrImmediate(30, 10, 5) // 0b1010 OR 0b0101 == 0b1111
-	suite.assertRegisterEquals(30, 15)
+	suite.executor.OrImmediate(resultRegister, 10, 5) // 0b1010 OR 0b0101 == 0b1111
+	suite.assertRegisterEquals(resultRegister, 15)
 
 	// Test with 11th bit
 	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 10)
 	suite.LoadMemoryIntoRegisterX(1)
-	suite.executor.OrImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 11))
-	suite.assertRegisterEquals(30, math.MaxUint32)
+	suite.executor.OrImmediate(resultRegister, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 11))
+	suite.assertRegisterEquals(resultRegister, math.MaxUint32)
 
 	// Test without 11th bit
 	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 9)
 	suite.LoadMemoryIntoRegisterX(1)
-	suite.executor.OrImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 10, 10))
-	suite.assertRegisterEquals(30, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 10))
+	suite.executor.OrImmediate(resultRegister, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 10, 10))
+	suite.assertRegisterEquals(resultRegister, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 10))
 }
 
 func (suite *InstructionExecutorSuite) TestXorImmediate() {
 	// Basic test
-	suite.executor.XorImmediate(30, 10, 7) // 0b1010 XOR 0b0111 == 0b1101
-	suite.assertRegisterEquals(30, 13)
+	suite.executor.XorImmediate(resultRegister, 10, 7) // 0b1010 XOR 0b0111 == 0b1101
+	suite.assertRegisterEquals(resultRegister, 13)
 
 	// Test with 11th bit
 	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 10)
 	suite.LoadMemoryIntoRegisterX(1)
-	suite.executor.XorImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 10, 11))
-	suite.assertRegisterEquals(30, ^Util.KeepBitsInInclusiveRange(math.MaxUint32, 10, 10))
+	suite.executor.XorImmediate(resultRegister, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 10, 11))
+	suite.assertRegisterEquals(resultRegister, ^Util.KeepBitsInInclusiveRange(math.MaxUint32, 10, 10))
 
 	// Test without 11th bit
 	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 10)
 	suite.LoadMemoryIntoRegisterX(1)
-	suite.executor.XorImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 10, 10))
-	suite.assertRegisterEquals(30, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 9))
+	suite.executor.XorImmediate(resultRegister, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 10, 10))
+	suite.assertRegisterEquals(resultRegister, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 9))
 }
 
 func (suite *InstructionExecutorSuite) TestLeftShiftLogicalImmediate() {
 	//Basic Test
-	suite.executor.ShiftLeftLogicalImmediate(30, 1, 5)
-	suite.assertRegisterEquals(30, 1<<5)
+	suite.executor.ShiftLeftLogicalImmediate(resultRegister, 1, 5)
+	suite.assertRegisterEquals(resultRegister, 1<<5)
 
 	// Test with number that uses upper 27 bits as well as lower 5 bits
-	suite.executor.ShiftLeftLogicalImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5)) // 16 + 32
-	suite.assertRegisterEquals(30, 1<<16)
+	suite.executor.ShiftLeftLogicalImmediate(resultRegister, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5)) // 16 + 32
+	suite.assertRegisterEquals(resultRegister, 1<<16)
 }
 
 func (suite *InstructionExecutorSuite) TestRightShiftLogicalImmediate() {
 	//Basic Test
-	suite.executor.ShiftRightLogicalImmediate(30, 15, 2)
-	suite.assertRegisterEquals(30, 15>>2)
+	suite.executor.ShiftRightLogicalImmediate(resultRegister, 15, 2)
+	suite.assertRegisterEquals(resultRegister, 15>>2)
 
 	// Test with number that uses upper 27 bits as well as lower 5 bits, where MSB is 0
 	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 30)
 	suite.LoadMemoryIntoRegisterX(1)
-	suite.executor.ShiftRightLogicalImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5)) // 16 + 32
-	suite.assertRegisterEquals(30, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 14))
+	suite.executor.ShiftRightLogicalImmediate(resultRegister, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5)) // 16 + 32
+	suite.assertRegisterEquals(resultRegister, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 14))
 
 	// Test with number that uses upper 27 bits as well as lower 5 bits, where MSB is 1
 	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 17, 31)
 	suite.LoadMemoryIntoRegisterX(1)
-	suite.executor.ShiftRightLogicalImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5)) // 16 + 32
-	suite.assertRegisterEquals(30, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 15))
+	suite.executor.ShiftRightLogicalImmediate(resultRegister, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5)) // 16 + 32
+	suite.assertRegisterEquals(resultRegister, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 15))
 }
 
 func (suite *InstructionExecutorSuite) TestRightShiftArithmeticImmediate() {
 	//Basic Test
-	suite.executor.ShiftRightArithmeticImmediate(30, 15, 2)
-	suite.assertRegisterEquals(30, 15>>2)
+	suite.executor.ShiftRightArithmeticImmediate(resultRegister, 15, 2)
+	suite.assertRegisterEquals(resultRegister, 15>>2)
 
 	// Test with number that uses upper 27 bits as well as lower 5 bits, where MSB is 0
 	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 30)
 	suite.LoadMemoryIntoRegisterX(1)
-	suite.executor.ShiftRightArithmeticImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5)) // 16 + 32
-	suite.assertRegisterEquals(30, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 14))
+	suite.executor.ShiftRightArithmeticImmediate(resultRegister, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5)) // 16 + 32
+	suite.assertRegisterEquals(resultRegister, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 14))
 
 	// Test with number that uses upper 27 bits as well as lower 5 bits, where MSB is 1
 	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 17, 31)
 	suite.LoadMemoryIntoRegisterX(1)
-	suite.executor.ShiftRightArithmeticImmediate(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5)) // 16 + 32
-	suite.assertRegisterEquals(30, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 31))
+	suite.executor.ShiftRightArithmeticImmediate(resultRegister, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5)) // 16 + 32
+	suite.assertRegisterEquals(resultRegister, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 31))
 }
 
 func (suite *InstructionExecutorSuite) TestLUI() {
@@ -430,30 +432,159 @@ func (suite *InstructionExecutorSuite) TestAUIPC() {
 
 func (suite *InstructionExecutorSuite) TestAdd() {
 	//Basic Test
-	suite.executor.Add(30, 1, 2)
-	suite.assertRegisterEquals(30, 3)
+	suite.executor.Add(resultRegister, 1, 2)
+	suite.assertRegisterEquals(resultRegister, 3)
 
 	//Advanced test that checks overflow
 	suite.memory.val = math.MaxUint32
 	suite.LoadMemoryIntoRegisterX(1)
-	suite.executor.Add(30, 1, 2)
-	suite.assertRegisterEquals(30, 1)
+	suite.executor.Add(resultRegister, 1, 2)
+	suite.assertRegisterEquals(resultRegister, 1)
 }
 
 func (suite *InstructionExecutorSuite) TestSub() {
 	//Basic Test
-	suite.executor.Sub(30, 3, 1)
-	suite.assertRegisterEquals(30, 2)
+	suite.executor.Sub(resultRegister, 3, 1)
+	suite.assertRegisterEquals(resultRegister, 2)
 
 	//Advanced test that checks overflow
-	suite.executor.Sub(30, 0, 1)
-	suite.assertRegisterEquals(30, math.MaxUint32)
+	suite.executor.Sub(resultRegister, 0, 1)
+	suite.assertRegisterEquals(resultRegister, math.MaxUint32)
 }
 
 func (suite *InstructionExecutorSuite) TestSetLessThan() {
+	//Basic Test
+	suite.executor.SetLessThan(resultRegister, 1, 2)
+	suite.assertRegisterEquals(resultRegister, 1)
+	suite.executor.SetLessThan(resultRegister, 2, 1)
+	suite.assertRegisterEquals(resultRegister, 0)
 
+	//Check that signed comparison is occuring
+	suite.memory.val = math.MaxUint32
+	suite.LoadMemoryIntoRegisterX(5)
+	suite.executor.SetLessThan(resultRegister, 5, 2)
+	suite.assertRegisterEquals(resultRegister, 1) // -1 is less than 5
+	suite.memory.val = math.MaxUint32 - 1
+	suite.LoadMemoryIntoRegisterX(6)
+	suite.executor.SetLessThan(resultRegister, 5, 6)
+	suite.assertRegisterEquals(resultRegister, 0) // -1 is greater than -2
 }
 
 func (suite *InstructionExecutorSuite) TestSetLessThanUnsigned() {
+	//Basic Test
+	suite.executor.SetLessThanUnsigned(resultRegister, 1, 2)
+	suite.assertRegisterEquals(resultRegister, 1)
+	suite.executor.SetLessThanUnsigned(resultRegister, 2, 1)
+	suite.assertRegisterEquals(resultRegister, 0)
 
+	//Check that unsigned comparison is occuring
+	suite.memory.val = math.MaxUint32 - 1
+	suite.LoadMemoryIntoRegisterX(6)
+	suite.memory.val = math.MaxUint32
+	suite.LoadMemoryIntoRegisterX(5)
+	suite.executor.SetLessThanUnsigned(resultRegister, 6, 5)
+	suite.assertRegisterEquals(resultRegister, 1) // (math.MaxUInt32 - 1) is less than math.MaxUint32
+	suite.LoadMemoryIntoRegisterX(5)
+	suite.executor.SetLessThanUnsigned(resultRegister, 5, 2)
+	suite.assertRegisterEquals(resultRegister, 0) // math.MaxUint32 is greater than 5
+}
+
+func (suite *InstructionExecutorSuite) TestAnd() {
+	//Basic Test
+	suite.executor.And(resultRegister, 10, 7)
+	suite.assertRegisterEquals(resultRegister, 2)
+
+	//advanced test
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 14, 31)
+	suite.LoadMemoryIntoRegisterX(1)
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 20)
+	suite.LoadMemoryIntoRegisterX(2)
+	suite.executor.And(resultRegister, 1, 2)
+	suite.assertRegisterEquals(resultRegister, Util.KeepBitsInInclusiveRange(math.MaxUint32, 14, 20))
+}
+
+func (suite *InstructionExecutorSuite) TestOr() {
+	//Basic test
+	suite.executor.Or(resultRegister, 10, 5)
+	suite.assertRegisterEquals(resultRegister, 15)
+
+	//advanced test
+	val := Util.KeepBitsInInclusiveRange(math.MaxUint32, 12, 16)
+	suite.memory.val = val
+	suite.LoadMemoryIntoRegisterX(1)
+	suite.memory.val = ^val
+	suite.LoadMemoryIntoRegisterX(2)
+	suite.executor.Or(resultRegister, 1, 2)
+	suite.assertRegisterEquals(resultRegister, math.MaxUint32)
+}
+
+func (suite *InstructionExecutorSuite) TestXor() {
+	//Basic test
+	suite.executor.Xor(resultRegister, 7, 14) // 0b0111 XOR 0b1110 = 1001
+	suite.assertRegisterEquals(resultRegister, 9)
+
+	//Advanced test
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 29)
+	suite.LoadMemoryIntoRegisterX(1)
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 29, 30)
+	suite.LoadMemoryIntoRegisterX(2)
+	suite.executor.Xor(resultRegister, 1, 2)
+	expected := Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 28) + Util.KeepBitsInInclusiveRange(math.MaxUint32, 30, 30)
+	suite.assertRegisterEquals(resultRegister, expected)
+}
+
+func (suite *InstructionExecutorSuite) TestLeftShiftLogical() {
+	//Basic Test
+	suite.executor.ShiftLeftLogical(resultRegister, 1, 5)
+	suite.assertRegisterEquals(resultRegister, 1<<5)
+
+	// Test with number that uses upper 27 bits as well as lower 5 bits
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5) // 16 + 32
+	suite.LoadMemoryIntoRegisterX(5)
+	suite.executor.ShiftLeftLogical(resultRegister, 1, 5)
+	suite.assertRegisterEquals(resultRegister, 1<<16)
+}
+
+func (suite *InstructionExecutorSuite) TestRightShiftLogical() {
+	//Basic Test
+	suite.executor.ShiftRightLogical(resultRegister, 15, 2)
+	suite.assertRegisterEquals(resultRegister, 15>>2)
+
+	// Test with number that uses upper 27 bits as well as lower 5 bits, where MSB is 0
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 30)
+	suite.LoadMemoryIntoRegisterX(1)
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5) // 16 + 32
+	suite.LoadMemoryIntoRegisterX(2)
+	suite.executor.ShiftRightLogical(resultRegister, 1, 2)
+	suite.assertRegisterEquals(resultRegister, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 14))
+
+	// Test with number that uses upper 27 bits as well as lower 5 bits, where MSB is 1
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 17, 31)
+	suite.LoadMemoryIntoRegisterX(1)
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5) // 16 + 32
+	suite.LoadMemoryIntoRegisterX(2)
+	suite.executor.ShiftRightLogical(resultRegister, 1, 2)
+	suite.assertRegisterEquals(resultRegister, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 15))
+}
+
+func (suite *InstructionExecutorSuite) TestRightShiftArithmetic() {
+	//Basic Test
+	suite.executor.ShiftRightArithmetic(resultRegister, 15, 2)
+	suite.assertRegisterEquals(resultRegister, 15>>2)
+
+	// Test with number that uses upper 27 bits as well as lower 5 bits, where MSB is 0
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 30)
+	suite.LoadMemoryIntoRegisterX(1)
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5) // 16 + 32
+	suite.LoadMemoryIntoRegisterX(2)
+	suite.executor.ShiftRightArithmetic(resultRegister, 1, 2)
+	suite.assertRegisterEquals(resultRegister, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 14))
+
+	// Test with number that uses upper 27 bits as well as lower 5 bits, where MSB is 1
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 17, 31)
+	suite.LoadMemoryIntoRegisterX(1)
+	suite.memory.val = Util.KeepBitsInInclusiveRange(math.MaxUint32, 4, 5) // 16 + 32
+	suite.LoadMemoryIntoRegisterX(2)
+	suite.executor.ShiftRightArithmetic(resultRegister, 1, 2)
+	suite.assertRegisterEquals(resultRegister, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 31))
 }

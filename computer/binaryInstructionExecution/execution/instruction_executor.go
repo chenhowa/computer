@@ -225,6 +225,8 @@ func (ex *RiscVInstructionExecutor) SetLessThan(dest uint, reg1 uint, reg2 uint)
 	}
 }
 
+/*SetLessThanUnsigned performs an unsigned comparison of the values in registers `reg1` and `reg2`.
+If `reg1` is les than `reg2`, register `dest` is set to 1; otherwise it is set to 0*/
 func (ex *RiscVInstructionExecutor) SetLessThanUnsigned(dest uint, reg1 uint, reg2 uint) {
 	defer ex.resetRegisterZero()
 	reg1ValueLess := (ex.operator.get(reg1)) < ex.operator.get(reg2)
@@ -234,44 +236,52 @@ func (ex *RiscVInstructionExecutor) SetLessThanUnsigned(dest uint, reg1 uint, re
 	}
 }
 
+/*And performs a bitwise AND between the values in registers `reg1` and `reg2`,
+and places the result in register `dest`*/
 func (ex *RiscVInstructionExecutor) And(dest uint, reg1 uint, reg2 uint) {
 	defer ex.resetRegisterZero()
 	ex.operator.and(dest, reg1, reg2)
 }
 
+/*Or performs a bitwise OR between the values in registers `reg1` and `reg2`,
+and places the result in register `dest`*/
 func (ex *RiscVInstructionExecutor) Or(dest uint, reg1 uint, reg2 uint) {
 	defer ex.resetRegisterZero()
 	ex.operator.or(dest, reg1, reg2)
 }
 
+/*Xor performs a bitwise Xor between the values in registers `reg1` and `reg2`,
+and places the result in register `dest`*/
 func (ex *RiscVInstructionExecutor) Xor(dest uint, reg1 uint, reg2 uint) {
 	defer ex.resetRegisterZero()
 	ex.operator.xor(dest, reg1, reg2)
 }
 
+/*ShiftLeftLogical takes the lowest 5 bits of the value in register `shiftreg`, and then
+logical left-shifts the value in register `reg` by that amount, and places the result in
+register `dest`*/
 func (ex *RiscVInstructionExecutor) ShiftLeftLogical(dest uint, reg uint, shiftreg uint) {
 	defer ex.resetRegisterZero()
-	lowerFiveBits := ex.operator.get(shiftreg) & (math.MaxUint32 >> (32 - 5))
+	lowerFiveBits := Utils.KeepBitsInInclusiveRange(ex.operator.get(shiftreg), 0, 4)
 	ex.operator.leftShiftImmediate(dest, reg, lowerFiveBits)
 }
 
+/*ShiftRightLogical takes the lowest 5 bits of the value in register `shiftreg`, and then
+logical right-shifts the value in register `reg` by that amount, and places the result in
+register `dest`*/
 func (ex *RiscVInstructionExecutor) ShiftRightLogical(dest uint, reg uint, shiftreg uint) {
 	defer ex.resetRegisterZero()
 	lowerFiveBits := ex.operator.get(shiftreg) & (uint32(math.MaxUint32) >> (32 - 5))
 	ex.operator.rightShiftImmediate(dest, reg, lowerFiveBits, false)
 }
 
+/*ShiftRightArithmetic takes the lowest 5 bits of the value in register `shiftreg`, and then
+arithmetic right-shifts the value in register `reg` by that amount, and places the result in
+register `dest`*/
 func (ex *RiscVInstructionExecutor) ShiftRightArithmetic(dest uint, reg uint, shiftreg uint) {
 	defer ex.resetRegisterZero()
 	lowerFiveBits := ex.operator.get(shiftreg) & (math.MaxUint32 >> (32 - 5))
 	ex.operator.rightShiftImmediate(dest, reg, lowerFiveBits, true)
-}
-
-func (ex *RiscVInstructionExecutor) Nop() {
-	defer ex.resetRegisterZero()
-	// This instruction literally does nothing.
-	// In RISC-V, it can be encoded as ADDI x0, x0, 0,
-	// but there is no need for that here.
 }
 
 func (ex *RiscVInstructionExecutor) BranchEqual() {
