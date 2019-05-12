@@ -17,6 +17,7 @@ type InstructionExecutorSuite struct {
 	suite.Suite
 	executor RiscVInstructionExecutor
 	memory   *ExecutorMemoryMock
+	manager  *ExecutorInstructionManagerMock
 }
 
 type ExecutorInstructionManagerMock struct {
@@ -74,10 +75,19 @@ func (suite *InstructionExecutorSuite) SetupTest() {
 		val: 0,
 	}
 	suite.memory = &memory
+
+	manager := ExecutorInstructionManagerMock{
+		pcAddress: 0,
+	}
+	suite.manager = &manager
 }
 
 func (suite *InstructionExecutorSuite) assertRegisterEquals(register uint, expected uint32) {
 	assert.Equal(suite.T(), expected, suite.executor.Get(register))
+}
+
+func (suite *InstructionExecutorSuite) assertManagerAddressEquals(expected uint32) {
+	assert.Equal(suite.T(), expected, suite.manager.pcAddress)
 }
 
 func (suite *InstructionExecutorSuite) TestLoadWord_Basic() {
@@ -615,5 +625,233 @@ func (suite *InstructionExecutorSuite) TestRightShiftArithmetic() {
 }
 
 func (suite *InstructionExecutorSuite) TestBranchEqual() {
+	offset := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 12)
+	actual := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 11)
 
+	// Test if not equal
+	suite.executor.BranchEqual(1, 2, offset, suite.manager)
+	suite.assertManagerAddressEquals(0)
+	suite.manager.AssertNotCalled(suite.T(), "addOffsetForNextInstructionAddress", mock.Anything)
+
+	//Test if equal
+	suite.manager.On("addOffsetForNextInstructionAddress", uint32(actual))
+	suite.executor.BranchEqual(2, 2, offset, suite.manager)
+	suite.assertManagerAddressEquals(actual)
+	suite.manager.AssertCalled(suite.T(), "addOffsetForNextInstructionAddress", uint32(actual))
+}
+
+func (suite *InstructionExecutorSuite) TestBranchNotEqual() {
+	offset := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 12)
+	actual := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 11)
+
+	//Test if equal
+	suite.executor.BranchNotEqual(2, 2, offset, suite.manager)
+	suite.assertManagerAddressEquals(0)
+	suite.manager.AssertNotCalled(suite.T(), "addOffsetForNextInstructionAddress", mock.Anything)
+
+	// Test if not equal
+	suite.manager.On("addOffsetForNextInstructionAddress", uint32(actual))
+	suite.executor.BranchNotEqual(1, 2, offset, suite.manager)
+	suite.assertManagerAddressEquals(actual)
+	suite.manager.AssertCalled(suite.T(), "addOffsetForNextInstructionAddress", uint32(actual))
+
+}
+
+func (suite *InstructionExecutorSuite) TestBranchLessThan_Basic() {
+	offset := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 12)
+	actual := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 11)
+	//Test basic
+	suite.executor.BranchLessThan(2, 2, offset, suite.manager)
+	suite.assertManagerAddressEquals(0)
+	suite.executor.BranchLessThan(2, 1, offset, suite.manager)
+	suite.assertManagerAddressEquals(0)
+	suite.manager.AssertNotCalled(suite.T(), "addOffsetForNextInstructionAddress", mock.Anything)
+
+	suite.manager.On("addOffsetForNextInstructionAddress", uint32(actual))
+	suite.executor.BranchLessThan(1, 2, offset, suite.manager)
+	suite.assertManagerAddressEquals(actual)
+	suite.manager.AssertCalled(suite.T(), "addOffsetForNextInstructionAddress", uint32(actual))
+
+}
+
+func (suite *InstructionExecutorSuite) TestBranchLessThan_Advanced() {
+
+	//Test signed comparison is occurring
+	suite.memory.val = math.MaxUint32
+	suite.LoadMemoryIntoRegisterX(1)
+	suite.memory.val = math.MaxUint32 - 1
+	suite.LoadMemoryIntoRegisterX(2)
+
+	offset := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 12)
+	actual := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 11)
+
+	suite.executor.BranchLessThan(1, 2, offset, suite.manager)
+	suite.assertManagerAddressEquals(0)
+	suite.executor.BranchLessThan(3, 1, offset, suite.manager)
+	suite.assertManagerAddressEquals(0)
+	suite.manager.AssertNotCalled(suite.T(), "addOffsetForNextInstructionAddress", mock.Anything)
+
+	suite.manager.On("addOffsetForNextInstructionAddress", uint32(actual))
+	suite.executor.BranchLessThan(2, 1, offset, suite.manager)
+	suite.assertManagerAddressEquals(actual)
+	suite.manager.AssertCalled(suite.T(), "addOffsetForNextInstructionAddress", uint32(actual))
+}
+
+func (suite *InstructionExecutorSuite) TestBranchLessThanUnsigned_Basic() {
+	offset := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 12)
+	actual := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 11)
+	//Test basic
+	suite.executor.BranchLessThanUnsigned(2, 2, offset, suite.manager)
+	suite.assertManagerAddressEquals(0)
+	suite.executor.BranchLessThanUnsigned(2, 1, offset, suite.manager)
+	suite.assertManagerAddressEquals(0)
+	suite.manager.AssertNotCalled(suite.T(), "addOffsetForNextInstructionAddress", mock.Anything)
+
+	suite.manager.On("addOffsetForNextInstructionAddress", uint32(actual))
+	suite.executor.BranchLessThanUnsigned(1, 2, offset, suite.manager)
+	suite.assertManagerAddressEquals(actual)
+	suite.manager.AssertCalled(suite.T(), "addOffsetForNextInstructionAddress", uint32(actual))
+
+}
+
+func (suite *InstructionExecutorSuite) TestBranchLessThanUnsigned_Advanced() {
+
+	//Test unsigned comparison is occurring
+	suite.memory.val = math.MaxUint32
+	suite.LoadMemoryIntoRegisterX(1)
+	suite.memory.val = math.MaxUint32 - 1
+	suite.LoadMemoryIntoRegisterX(2)
+
+	offset := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 12)
+	actual := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 11)
+
+	suite.executor.BranchLessThanUnsigned(1, 2, offset, suite.manager)
+	suite.assertManagerAddressEquals(0)
+	suite.executor.BranchLessThanUnsigned(1, 3, offset, suite.manager)
+	suite.assertManagerAddressEquals(0)
+	suite.manager.AssertNotCalled(suite.T(), "addOffsetForNextInstructionAddress", mock.Anything)
+
+	suite.manager.On("addOffsetForNextInstructionAddress", uint32(actual))
+	suite.executor.BranchLessThanUnsigned(2, 1, offset, suite.manager)
+	suite.assertManagerAddressEquals(actual)
+	suite.manager.AssertCalled(suite.T(), "addOffsetForNextInstructionAddress", uint32(actual))
+}
+
+func (suite *InstructionExecutorSuite) TestBranchGreaterThanOrEqual_Basic() {
+	offset := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 12)
+	actual := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 11)
+	//Test basic
+	suite.executor.BranchGreaterThanOrEqual(1, 2, offset, suite.manager)
+	suite.assertManagerAddressEquals(0)
+	suite.manager.AssertNotCalled(suite.T(), "addOffsetForNextInstructionAddress", mock.Anything)
+
+	suite.manager.On("addOffsetForNextInstructionAddress", uint32(actual))
+	suite.executor.BranchGreaterThanOrEqual(2, 1, offset, suite.manager)
+	suite.assertManagerAddressEquals(actual)
+	suite.manager.AssertCalled(suite.T(), "addOffsetForNextInstructionAddress", uint32(actual))
+
+	suite.manager.On("addOffsetForNextInstructionAddress", uint32(actual+1))
+	suite.executor.BranchGreaterThanOrEqual(2, 2, offset+1, suite.manager)
+	suite.assertManagerAddressEquals(actual + actual + 1)
+
+}
+
+func (suite *InstructionExecutorSuite) TestBranchGreaterThanOrEqual_Advanced() {
+
+	//Test signed comparison is occurring
+	suite.memory.val = math.MaxUint32
+	suite.LoadMemoryIntoRegisterX(1)      //register 1 contains -1
+	suite.memory.val = math.MaxUint32 - 1 // register 2 contains -2
+	suite.LoadMemoryIntoRegisterX(2)
+
+	offset := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 12)
+	actual := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 11)
+
+	suite.executor.BranchGreaterThanOrEqual(2, 1, offset, suite.manager)
+	suite.assertManagerAddressEquals(0)
+	suite.executor.BranchGreaterThanOrEqual(1, 3, offset, suite.manager)
+	suite.assertManagerAddressEquals(0)
+	suite.manager.AssertNotCalled(suite.T(), "addOffsetForNextInstructionAddress", mock.Anything)
+
+	suite.manager.On("addOffsetForNextInstructionAddress", uint32(actual))
+	suite.executor.BranchGreaterThanOrEqual(1, 2, offset, suite.manager)
+	suite.assertManagerAddressEquals(actual)
+	suite.manager.AssertCalled(suite.T(), "addOffsetForNextInstructionAddress", uint32(actual))
+}
+
+func (suite *InstructionExecutorSuite) TestBranchGreaterThanOrEqualUnsigned_Basic() {
+	offset := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 12)
+	actual := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 11)
+	//Test basic
+	suite.executor.BranchGreaterThanOrEqualUnsigned(1, 2, offset, suite.manager)
+	suite.assertManagerAddressEquals(0)
+	suite.manager.AssertNotCalled(suite.T(), "addOffsetForNextInstructionAddress", mock.Anything)
+
+	suite.manager.On("addOffsetForNextInstructionAddress", uint32(actual))
+	suite.executor.BranchGreaterThanOrEqualUnsigned(2, 1, offset, suite.manager)
+	suite.assertManagerAddressEquals(actual)
+	suite.manager.AssertCalled(suite.T(), "addOffsetForNextInstructionAddress", uint32(actual))
+
+	suite.manager.On("addOffsetForNextInstructionAddress", uint32(actual+1))
+	suite.executor.BranchGreaterThanOrEqualUnsigned(2, 2, offset+1, suite.manager)
+	suite.assertManagerAddressEquals(actual + actual + 1)
+
+}
+
+func (suite *InstructionExecutorSuite) TestBranchGreaterThanOrEqualUnsigned_Advanced() {
+
+	//Test signed comparison is occurring
+	suite.memory.val = math.MaxUint32
+	suite.LoadMemoryIntoRegisterX(1)      //register 1 contains -1
+	suite.memory.val = math.MaxUint32 - 1 // register 2 contains -2
+	suite.LoadMemoryIntoRegisterX(2)
+
+	offset := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 12)
+	actual := Util.KeepBitsInInclusiveRange(math.MaxUint32, 11, 11)
+
+	suite.executor.BranchGreaterThanOrEqualUnsigned(2, 1, offset, suite.manager)
+	suite.assertManagerAddressEquals(0)
+	suite.executor.BranchGreaterThanOrEqualUnsigned(3, 1, offset, suite.manager)
+	suite.assertManagerAddressEquals(0)
+	suite.manager.AssertNotCalled(suite.T(), "addOffsetForNextInstructionAddress", mock.Anything)
+
+	suite.manager.On("addOffsetForNextInstructionAddress", uint32(actual))
+	suite.executor.BranchGreaterThanOrEqualUnsigned(1, 2, offset, suite.manager)
+	suite.assertManagerAddressEquals(actual)
+	suite.manager.AssertCalled(suite.T(), "addOffsetForNextInstructionAddress", uint32(actual))
+}
+
+func (suite *InstructionExecutorSuite) TestJumpAndLink() {
+	suite.manager.pcAddress = 1
+	suite.manager.On("addOffsetForNextInstructionAddress", uint32(math.MaxUint32))
+	suite.manager.On("getNextInstructionAddress")
+	suite.executor.JumpAndLink(1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 0, 19), suite.manager)
+	suite.assertRegisterEquals(1, 1+4)
+	suite.assertManagerAddressEquals(0) // 1 + math.MaxUint32
+	suite.manager.AssertCalled(suite.T(), "addOffsetForNextInstructionAddress", uint32(math.MaxUint32))
+	suite.manager.AssertCalled(suite.T(), "getNextInstructionAddress")
+
+	suite.manager.pcAddress = 1
+	offset := Util.KeepBitsInInclusiveRange(math.MaxUint32, 18, 18)
+	suite.manager.On("addOffsetForNextInstructionAddress", offset)
+	suite.executor.JumpAndLink(1, offset, suite.manager)
+	suite.assertRegisterEquals(1, 1+4)
+	suite.assertManagerAddressEquals(offset + 1) // 1 + math.MaxUint32
+	suite.manager.AssertCalled(suite.T(), "addOffsetForNextInstructionAddress", offset)
+}
+
+func (suite *InstructionExecutorSuite) TestJumpAndLinkRegister() {
+	suite.manager.pcAddress = 1
+	suite.manager.On("getNextInstructionAddress")
+	suite.manager.On("loadAsNextInstructionAddress", uint32(math.MaxUint32-1))
+	suite.executor.JumpAndLinkRegister(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 11), suite.manager)
+	suite.assertRegisterEquals(30, 1+4)
+	suite.assertManagerAddressEquals(math.MaxUint32 - 1)
+
+	suite.manager.pcAddress = 2
+	suite.manager.On("getNextInstructionAddress")
+	suite.manager.On("loadAsNextInstructionAddress", Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 10))
+	suite.executor.JumpAndLinkRegister(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 10), suite.manager)
+	suite.assertRegisterEquals(30, 2+4)
+	suite.assertManagerAddressEquals(Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 10))
 }

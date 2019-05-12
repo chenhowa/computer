@@ -276,6 +276,7 @@ the 12 lowest bits of `immediate` are added to the pc through the `manager`
 */
 func (ex *RiscVInstructionExecutor) BranchEqual(reg1 uint, reg2 uint, immediate uint32, manager instructionManager) {
 	defer ex.resetRegisterZero()
+
 	if ex.Get(reg1) == ex.Get(reg2) {
 		manager.addOffsetForNextInstructionAddress(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
 	}
@@ -286,7 +287,7 @@ the 12 lowest bits of `immediate` are added to the pc through the `manager`
 */
 func (ex *RiscVInstructionExecutor) BranchNotEqual(reg1 uint, reg2 uint, immediate uint32, manager instructionManager) {
 	defer ex.resetRegisterZero()
-	if ex.Get(reg1) == ex.Get(reg2) {
+	if ex.Get(reg1) != ex.Get(reg2) {
 		manager.addOffsetForNextInstructionAddress(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
 	}
 }
