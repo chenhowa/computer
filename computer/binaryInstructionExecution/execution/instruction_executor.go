@@ -6,10 +6,6 @@ import (
 	Utils "github.com/chenhowa/os/computer/binaryInstructionExecution/bitUtils"
 )
 
-/*
-	Remember to check the pseudo-ops and psuedo-instructions!
-*/
-
 /*The RiscVInstructionExecutor is responsible for taking the operands of
 a binary instruction and turning them into MESSAGES to the Operator and InstructionManager
 executing the instruction using an internal object.
@@ -17,6 +13,11 @@ executing the instruction using an internal object.
 type RiscVInstructionExecutor struct {
 	operator instructionOperator
 	//instructionManager instructionManager
+}
+
+type csrOperator interface {
+	get(reg uint) uint32
+	set(reg uint, val uint32)
 }
 
 type instructionManager interface {
@@ -441,41 +442,122 @@ func (ex *RiscVInstructionExecutor) StoreByte(src uint, reg uint, offset uint32,
 	ex.operator.storeByte(src, address, memory)
 }
 
-func (ex *RiscVInstructionExecutor) CsrReadAndWrite() {
+/*CsrReadAndWrite atomically reads the value of CSR `csr` into register `dest` and writes the value of
+register `reg` into CSR `csr`. However, the read does not occur AT ALL if `dest` == 0*/
+func (ex *RiscVInstructionExecutor) CsrReadAndWrite(dest uint, reg uint, csr uint, csrOperator csrOperator) {
 	defer ex.resetRegisterZero()
+
+	regVal := ex.Get(reg)
+
+	if dest != 0 {
+		csrVal := csrOperator.get(csr)
+		ex.operator.andImmediate(dest, dest, 0)
+		ex.operator.orImmediate(dest, dest, csrVal)
+	}
+
+	csrOperator.set(csr, regVal)
+}
+
+/*CsrReadAndSet atomically reads the value of CSR `csr` into register `dest`, performs a logical
+OR between the value in `csr` and the value in `reg`, and the result is written back into the CSR `csr`
+However, the write to `csr` will not happen AT ALL if `reg` == 0*/
+func (ex *RiscVInstructionExecutor) CsrReadAndSet(dest uint, reg uint, csr uint, csrOperator csrOperator) {
+	defer ex.resetRegisterZero()
+
+	regVal := ex.Get(reg)
+	csrVal := csrOperator.get(csr)
+
+	ex.operator.andImmediate(dest, dest, 0)
+	ex.operator.orImmediate(dest, dest, csrVal)
+
+	if reg != 0 {
+		csrOperator.set(csr, regVal|csrVal)
+	}
 
 }
 
-func (ex *RiscVInstructionExecutor) CsrReadAndSet() {
+/*CsrReadAndClear atomically reads the value of CSR `csr` into register `dest`, and uses the high bits in
+`reg` to clear the corresponding bits in `csr`. However, the write to `csr` will not happen AT ALL if `reg` == 0*
+*/
+func (ex *RiscVInstructionExecutor) CsrReadAndClear(dest uint, reg uint, csr uint, csrOperator csrOperator) {
 	defer ex.resetRegisterZero()
+
+	regVal := ex.Get(reg)
+	csrVal := csrOperator.get(csr)
+
+	ex.operator.andImmediate(dest, dest, 0)
+	ex.operator.orImmediate(dest, dest, csrVal)
+
+	if reg != 0 {
+		csrOperator.set(csr, (^regVal)&csrVal)
+	}
+}
+
+/*CsrReadAndWriteImmediate atomically reads the value of CSR `csr` into register `dest` and writes zero-extended
+lowest 5 bits of `immediate` into CSR `csr`. However, the read does not occur AT ALL if `dest` == 0
+*/
+func (ex *RiscVInstructionExecutor) CsrReadAndWriteImmediate(dest uint, immediate uint32, csr uint, csrOperator csrOperator) {
+	defer ex.resetRegisterZero()
+
+	if dest != 0 {
+		csrVal := csrOperator.get(csr)
+		ex.operator.andImmediate(dest, dest, 0)
+		ex.operator.orImmediate(dest, dest, csrVal)
+	}
+
+	csrOperator.set(csr, Utils.KeepBitsInInclusiveRange(immediate, 0, 4))
 
 }
 
-func (ex *RiscVInstructionExecutor) CsrReadAndClear() {
+/*CsrReadAndSetImmediate atomically reads the value of CSR `csr` into register `dest`, performs a logical
+OR between the value in `csr` and the zero-extended lowest 5 bits of `immediate`,
+and the result is written back into the CSR `csr`
+However, the write to `csr` will not happen AT ALL if the lowest 5 bits of `immediate` == 0*/
+func (ex *RiscVInstructionExecutor) CsrReadAndSetImmediate(dest uint, immediate uint32, csr uint, csrOperator csrOperator) {
 	defer ex.resetRegisterZero()
+
+	immVal := Utils.KeepBitsInInclusiveRange(immediate, 0, 4)
+	csrVal := csrOperator.get(csr)
+
+	ex.operator.andImmediate(dest, dest, 0)
+	ex.operator.orImmediate(dest, dest, csrVal)
+
+	if immVal != 0 {
+		csrOperator.set(csr, immVal|csrVal)
+	}
 
 }
 
-func (ex *RiscVInstructionExecutor) CsrReadAndWriteImmediate() {
+/*CsrReadAndClearImmediate atomically reads the value of CSR `csr` into register `dest`, and uses the high bits in
+the zero-extended lowest 5 bits of `immediate` to clear the corresponding bits in `csr`.
+However, the write to `csr` will not happen AT ALL if the lowest 5 bits of `immediate` == 0*
+*/
+func (ex *RiscVInstructionExecutor) CsrReadAndClearImmediate(dest uint, immediate uint32, csr uint, csrOperator csrOperator) {
 	defer ex.resetRegisterZero()
 
+	immVal := Utils.KeepBitsInInclusiveRange(immediate, 0, 4)
+	csrVal := csrOperator.get(csr)
+
+	ex.operator.andImmediate(dest, dest, 0)
+	ex.operator.orImmediate(dest, dest, csrVal)
+
+	if immVal != 0 {
+		csrOperator.set(csr, (^immVal)&csrVal)
+	}
 }
 
-func (ex *RiscVInstructionExecutor) CsrReadAndSetImmediate() {
-	defer ex.resetRegisterZero()
-
-}
-
-func (ex *RiscVInstructionExecutor) CsrReadAndClearImmediate() {
-	defer ex.resetRegisterZero()
-
-}
-
+/*EnvCall is used to user-level programs to make a request to the supporting execution environment, which is usually an operating system.
+According to the RiscV spec, how the arguments are passed is up to the execution environment, but will
+typically be in a defined set of the registers.
+*/
 func (ex *RiscVInstructionExecutor) EnvCall() {
 	defer ex.resetRegisterZero()
 
 }
 
+/*EnvBreak is used by user-level level programs to transfer control to a supporting debugging environment.
+This seems like it is similar toa the EnvCall, in that arguments can be passed in the registers according to the
+debugging environment's ABI. */
 func (ex *RiscVInstructionExecutor) EnvBreak() {
 	defer ex.resetRegisterZero()
 
