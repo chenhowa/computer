@@ -16,14 +16,13 @@ executing the instruction using an internal object.
 */
 type RiscVInstructionExecutor struct {
 	operator instructionOperator
-	// A translator doesn't need to know about memory...
-	//memory             instructionReadWriteMemory
-	instructionManager instructionManager
+	//instructionManager instructionManager
 }
 
 type instructionManager interface {
-	getInstructionAddress() uint32
-	getInstruction(memory instructionReadMemory) uint32
+	getCurrentInstructionAddress() uint32
+	getNextInstructionAddress() uint32
+	getCurrentInstruction(memory instructionReadMemory) uint32
 	incrementInstructionAddress()
 	addOffset(offset uint32)
 	loadInstructionAddress(newAddress uint32)
@@ -117,7 +116,7 @@ func (ex *RiscVInstructionExecutor) SetLessThanImmediate(dest uint, reg uint, im
 	// 2. Compare as signed numbers
 	// 3. Place 1 or 0 in destination reg, based on result.
 
-	regValueLess := int32(ex.operator.get(reg)) < int32(Utils.SignExtendUint32WithBit(immediate, 11))
+	regValueLess := int32(ex.Get(reg)) < int32(Utils.SignExtendUint32WithBit(immediate, 11))
 	ex.operator.andImmediate(dest, dest, 0) // zero out destination
 	if regValueLess {
 		ex.operator.orImmediate(dest, dest, 1)
@@ -129,7 +128,7 @@ and sets 1 if the register value is less, otherwise it sets 0
 */
 func (ex *RiscVInstructionExecutor) SetLessThanImmediateUnsigned(dest uint, reg uint, immediate uint32) {
 	defer ex.resetRegisterZero()
-	regValueLess := (ex.operator.get(reg)) < (Utils.SignExtendUint32WithBit(immediate, 11))
+	regValueLess := (ex.Get(reg)) < (Utils.SignExtendUint32WithBit(immediate, 11))
 	ex.operator.andImmediate(dest, dest, 0)
 	if regValueLess {
 		ex.operator.orImmediate(dest, dest, 1)
@@ -192,9 +191,9 @@ func (ex *RiscVInstructionExecutor) LoadUpperImmediate(dest uint, immediate uint
 
 /*AddUpperImmediateToPC takes the lower 20 bits of `immediate`, left-shifts by 12 bits, and then adds this
 offset to the value in the Program Counter (PC), and places the result in the register `dest`*/
-func (ex *RiscVInstructionExecutor) AddUpperImmediateToPC(dest uint, immediate uint32) {
+func (ex *RiscVInstructionExecutor) AddUpperImmediateToPC(dest uint, immediate uint32, manager instructionManager) {
 	defer ex.resetRegisterZero()
-	result := (immediate << 12) + uint32(ex.instructionManager.getInstructionAddress())
+	result := (immediate << 12) + uint32(manager.getCurrentInstructionAddress())
 	ex.operator.andImmediate(dest, dest, 0)
 	ex.operator.orImmediate(dest, dest, result)
 }
@@ -218,7 +217,7 @@ func (ex *RiscVInstructionExecutor) Sub(dest uint, reg1 uint, reg2 uint) {
 If `reg1` is les than `reg2`, register `dest` is set to 1; otherwise it is set to 0*/
 func (ex *RiscVInstructionExecutor) SetLessThan(dest uint, reg1 uint, reg2 uint) {
 	defer ex.resetRegisterZero()
-	reg1ValueLess := int32(ex.operator.get(reg1)) < int32(ex.operator.get(reg2))
+	reg1ValueLess := int32(ex.Get(reg1)) < int32(ex.Get(reg2))
 	ex.operator.andImmediate(dest, dest, 0) // zero out destination
 	if reg1ValueLess {
 		ex.operator.orImmediate(dest, dest, 1)
@@ -229,7 +228,7 @@ func (ex *RiscVInstructionExecutor) SetLessThan(dest uint, reg1 uint, reg2 uint)
 If `reg1` is les than `reg2`, register `dest` is set to 1; otherwise it is set to 0*/
 func (ex *RiscVInstructionExecutor) SetLessThanUnsigned(dest uint, reg1 uint, reg2 uint) {
 	defer ex.resetRegisterZero()
-	reg1ValueLess := (ex.operator.get(reg1)) < ex.operator.get(reg2)
+	reg1ValueLess := (ex.Get(reg1)) < ex.Get(reg2)
 	ex.operator.andImmediate(dest, dest, 0)
 	if reg1ValueLess {
 		ex.operator.orImmediate(dest, dest, 1)
@@ -262,7 +261,7 @@ logical left-shifts the value in register `reg` by that amount, and places the r
 register `dest`*/
 func (ex *RiscVInstructionExecutor) ShiftLeftLogical(dest uint, reg uint, shiftreg uint) {
 	defer ex.resetRegisterZero()
-	lowerFiveBits := Utils.KeepBitsInInclusiveRange(ex.operator.get(shiftreg), 0, 4)
+	lowerFiveBits := Utils.KeepBitsInInclusiveRange(ex.Get(shiftreg), 0, 4)
 	ex.operator.leftShiftImmediate(dest, reg, lowerFiveBits)
 }
 
@@ -271,7 +270,7 @@ logical right-shifts the value in register `reg` by that amount, and places the 
 register `dest`*/
 func (ex *RiscVInstructionExecutor) ShiftRightLogical(dest uint, reg uint, shiftreg uint) {
 	defer ex.resetRegisterZero()
-	lowerFiveBits := ex.operator.get(shiftreg) & (uint32(math.MaxUint32) >> (32 - 5))
+	lowerFiveBits := ex.Get(shiftreg) & (uint32(math.MaxUint32) >> (32 - 5))
 	ex.operator.rightShiftImmediate(dest, reg, lowerFiveBits, false)
 }
 
@@ -280,68 +279,96 @@ arithmetic right-shifts the value in register `reg` by that amount, and places t
 register `dest`*/
 func (ex *RiscVInstructionExecutor) ShiftRightArithmetic(dest uint, reg uint, shiftreg uint) {
 	defer ex.resetRegisterZero()
-	lowerFiveBits := ex.operator.get(shiftreg) & (math.MaxUint32 >> (32 - 5))
+	lowerFiveBits := ex.Get(shiftreg) & (math.MaxUint32 >> (32 - 5))
 	ex.operator.rightShiftImmediate(dest, reg, lowerFiveBits, true)
 }
 
-func (ex *RiscVInstructionExecutor) BranchEqual() {
-	defer ex.resetRegisterZero()
-
-}
-
-func (ex *RiscVInstructionExecutor) BranchNotEqual() {
-	defer ex.resetRegisterZero()
-
-}
-
-func (ex *RiscVInstructionExecutor) BranchLessThan() {
-	defer ex.resetRegisterZero()
-
-}
-
-func (ex *RiscVInstructionExecutor) BranchLessThanUnsigned() {
-	defer ex.resetRegisterZero()
-
-}
-
-func (ex *RiscVInstructionExecutor) BranchGreaterThanOrEqual() {
-	defer ex.resetRegisterZero()
-
-}
-
-func (ex *RiscVInstructionExecutor) BranchGreaterThanOrEqualUnsigned() {
-	defer ex.resetRegisterZero()
-
-}
-
-/*
-	This instruction saves the address of the next instruction into the
-	destination register and then adds the lower 20 bits of
-	the offset to the program counter (stored in the program counter)
+/*BranchEqual compares the values in registers `reg1` and `reg2`. If `reg1` equals `reg2`, then
+the 12 lowest bits of `immediate` are added to the pc through the `manager`
 */
-func (ex *RiscVInstructionExecutor) JumpAndLink(dest uint, pcOffset uint32) {
+func (ex *RiscVInstructionExecutor) BranchEqual(reg1 uint, reg2 uint, immediate uint32, manager instructionManager) {
+	defer ex.resetRegisterZero()
+	if ex.Get(reg1) == ex.Get(reg2) {
+		manager.addOffset(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
+	}
+}
+
+/*BranchNotEqual compares the values in registers `reg1` and `reg2`. If `reg1` does NOT equal `reg2`, then
+the 12 lowest bits of `immediate` are added to the pc through the `manager`
+*/
+func (ex *RiscVInstructionExecutor) BranchNotEqual(reg1 uint, reg2 uint, immediate uint32, manager instructionManager) {
+	defer ex.resetRegisterZero()
+	if ex.Get(reg1) == ex.Get(reg2) {
+		manager.addOffset(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
+	}
+}
+
+/*BranchLessThan compares the values in registers `reg1` and `reg2` as SIGNED values. If `reg1` < `reg2`, then
+the 12 lowest bits of `immediate` are added to the pc through the `manager`
+*/
+func (ex *RiscVInstructionExecutor) BranchLessThan(reg1 uint, reg2 uint, immediate uint32, manager instructionManager) {
+	defer ex.resetRegisterZero()
+	if int32(ex.Get(reg1)) < int32(ex.Get(reg2)) {
+		manager.addOffset(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
+	}
+}
+
+/*BranchLessThanUnsigned compares the values in registers `reg1` and `reg2` as UNSIGNED values. If `reg1` < `reg2`, then
+the 12 lowest bits of `immediate` are added to the pc through the `manager`
+*/
+func (ex *RiscVInstructionExecutor) BranchLessThanUnsigned(reg1 uint, reg2 uint, immediate uint32, manager instructionManager) {
+	defer ex.resetRegisterZero()
+	if ex.Get(reg1) < ex.Get(reg2) {
+		manager.addOffset(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
+	}
+}
+
+/*BranchGreaterThanOrEqual compares the values in registers `reg1` and `reg2` as SIGNED values. If `reg1` >= `reg2`, then
+the 12 lowest bits of `immediate` are added to the pc through the `manager`
+*/
+func (ex *RiscVInstructionExecutor) BranchGreaterThanOrEqual(reg1 uint, reg2 uint, immediate uint32, manager instructionManager) {
+	defer ex.resetRegisterZero()
+	if int32(ex.Get(reg1)) >= int32(ex.Get(reg2)) {
+		manager.addOffset(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
+	}
+}
+
+/*BranchGreaterThanOrEqualUnsigned compares the values in registers `reg1` and `reg2` as UNSIGNED values. If `reg1` >= `reg2`, then
+the 12 lowest bits of `immediate` are added to the pc through the `manager`
+*/
+func (ex *RiscVInstructionExecutor) BranchGreaterThanOrEqualUnsigned(reg1 uint, reg2 uint, immediate uint32, manager instructionManager) {
+	defer ex.resetRegisterZero()
+	if ex.Get(reg1) >= ex.Get(reg2) {
+		manager.addOffset(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
+	}
+}
+
+/*JumpAndLink saves the address of the next instruction into the
+register `dest` and then adds the sign-extended lowest 20 bits of
+the `pcOffset` to the program counter using `manager`
+*/
+func (ex *RiscVInstructionExecutor) JumpAndLink(dest uint, pcOffset uint32, manager instructionManager) {
 	defer ex.resetRegisterZero()
 	ex.operator.andImmediate(dest, dest, 0)
-	ex.operator.orImmediate(dest, dest, ex.instructionManager.getInstructionAddress())
+	ex.operator.orImmediate(dest, dest, manager.getNextInstructionAddress())
 
-	lower20Bits := pcOffset & (uint32(math.MaxUint32) >> (32 - 20))
-	ex.instructionManager.addOffset(lower20Bits)
+	lower20Bits := Utils.SignExtendUint32WithBit(Utils.KeepBitsInInclusiveRange(pcOffset, 0, 19), 19)
+	manager.addOffset(lower20Bits)
 }
 
-/*
-	This instruction saves the address of the next instruction into the
-	destination register. It then adds the lower 12 bits of the offset
-	to the value in the Base Register, sets the LSB of the result to 0,
-	It then sets the program counter to the result.
+/*JumpAndLinkRegister saves the address of the next instruction into the
+register `dest`. It then adds the sign-extended lowest 12 bits of `pcOffset`
+to the value in the register `basereg`, sets the LSB of the result to 0,
+and loads the result into the program counter through the `manager`
 */
-func (ex *RiscVInstructionExecutor) JumpAndLinkRegister(dest uint, basereg uint, pcOffset uint32) {
+func (ex *RiscVInstructionExecutor) JumpAndLinkRegister(dest uint, basereg uint, pcOffset uint32, manager instructionManager) {
 	defer ex.resetRegisterZero()
 	ex.operator.andImmediate(dest, dest, 0)
-	ex.operator.orImmediate(dest, dest, ex.instructionManager.getInstructionAddress())
+	ex.operator.orImmediate(dest, dest, manager.getNextInstructionAddress())
 
-	lower12Bits := pcOffset & (uint32(math.MaxUint32) >> (32 - 12))
-	address := lower12Bits + ex.operator.get(basereg)
-	ex.instructionManager.loadInstructionAddress(address)
+	lower12Bits := Utils.SignExtendUint32WithBit(Utils.KeepBitsInInclusiveRange(pcOffset, 0, 11), 11)
+	address := Utils.KeepBitsInInclusiveRange(lower12Bits+ex.Get(basereg), 1, 31)
+	manager.loadInstructionAddress(address)
 }
 
 /*LoadWord compiles an address from sign-extended lower 12 bits of offset, adds that to uint32 stored in
@@ -350,7 +377,7 @@ register `reg`, and then reads 1 Word from that address from memory into the des
 func (ex *RiscVInstructionExecutor) LoadWord(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
 	defer ex.resetRegisterZero()
 	lower12Bits := offset & Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), 0, 11)
-	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.operator.get(reg)
+	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.Get(reg)
 	ex.operator.loadWord(dest, address, memory)
 }
 
@@ -360,7 +387,7 @@ register `reg`, and then reads 1 Sign-extended HalfWord from that address from m
 func (ex *RiscVInstructionExecutor) LoadHalfWord(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
 	defer ex.resetRegisterZero()
 	lower12Bits := offset & Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), 0, 11)
-	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.operator.get(reg)
+	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.Get(reg)
 	ex.operator.loadHalfWord(dest, address, memory)
 
 }
@@ -371,7 +398,7 @@ register `reg`, and then reads 1 HalfWord from that address from memory into the
 func (ex *RiscVInstructionExecutor) LoadHalfWordUnsigned(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
 	defer ex.resetRegisterZero()
 	lower12Bits := offset & Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), 0, 11)
-	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.operator.get(reg)
+	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.Get(reg)
 	ex.operator.loadHalfWordUnsigned(dest, address, memory)
 
 }
@@ -382,7 +409,7 @@ register `reg`, and then reads 1 Sign-extended Byte from that address from memor
 func (ex *RiscVInstructionExecutor) LoadByte(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
 	defer ex.resetRegisterZero()
 	lower12Bits := offset & Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), 0, 11)
-	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.operator.get(reg)
+	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.Get(reg)
 	ex.operator.loadByte(dest, address, memory)
 
 }
@@ -393,7 +420,7 @@ register `reg`, and then reads 1 Byte from that address from memory into the des
 func (ex *RiscVInstructionExecutor) LoadByteUnsigned(dest uint, reg uint, offset uint32, memory instructionReadMemory) {
 	defer ex.resetRegisterZero()
 	lower12Bits := offset & Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), 0, 11)
-	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.operator.get(reg)
+	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.Get(reg)
 	ex.operator.loadByteUnsigned(dest, address, memory)
 
 }
@@ -403,7 +430,7 @@ in register `reg`, and then stores 4 Bytes from the register `src` into memory a
 func (ex *RiscVInstructionExecutor) StoreWord(src uint, reg uint, offset uint32, memory instructionWriteMemory) {
 	defer ex.resetRegisterZero()
 	lower12Bits := offset & Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), 0, 11)
-	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.operator.get(reg)
+	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.Get(reg)
 	ex.operator.storeWord(src, address, memory)
 }
 
@@ -412,7 +439,7 @@ in register `reg`, and then stores 2 Bytes from the register `src` into memory a
 func (ex *RiscVInstructionExecutor) StoreHalfWord(src uint, reg uint, offset uint32, memory instructionWriteMemory) {
 	defer ex.resetRegisterZero()
 	lower12Bits := offset & Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), 0, 11)
-	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.operator.get(reg)
+	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.Get(reg)
 	ex.operator.storeHalfWord(src, address, memory)
 }
 
@@ -421,7 +448,7 @@ in register `reg`, and then stores 1 Byte from the register `src` into memory at
 func (ex *RiscVInstructionExecutor) StoreByte(src uint, reg uint, offset uint32, memory instructionWriteMemory) {
 	defer ex.resetRegisterZero()
 	lower12Bits := offset & Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), 0, 11)
-	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.operator.get(reg)
+	address := Utils.SignExtendUint32WithBit(lower12Bits, 11) + ex.Get(reg)
 	ex.operator.storeByte(src, address, memory)
 }
 
