@@ -11,9 +11,12 @@ import (
 	Util "github.com/chenhowa/os/computer/binaryInstructionExecution/bitUtils"
 )
 
-type ExecutorMemoryMock struct {
-	mock.Mock
-	val uint32
+const resultRegister = 30
+
+type InstructionExecutorSuite struct {
+	suite.Suite
+	executor RiscVInstructionExecutor
+	memory   *ExecutorMemoryMock
 }
 
 type ExecutorInstructionManagerMock struct {
@@ -21,12 +24,29 @@ type ExecutorInstructionManagerMock struct {
 	pcAddress uint32
 }
 
-const resultRegister = 30
+func (im *ExecutorInstructionManagerMock) getCurrentInstructionAddress() uint32 {
+	im.Called()
+	return im.pcAddress
+}
 
-type InstructionExecutorSuite struct {
-	suite.Suite
-	executor RiscVInstructionExecutor
-	memory   *ExecutorMemoryMock
+func (im *ExecutorInstructionManagerMock) getNextInstructionAddress() uint32 {
+	im.Called()
+	return im.pcAddress + 4
+}
+
+func (im *ExecutorInstructionManagerMock) addOffsetForNextInstructionAddress(offset uint32) {
+	im.Called(offset)
+	im.pcAddress += offset
+}
+
+func (im *ExecutorInstructionManagerMock) loadAsNextInstructionAddress(newAddress uint32) {
+	im.Called(newAddress)
+	im.pcAddress = newAddress
+}
+
+type ExecutorMemoryMock struct {
+	mock.Mock
+	val uint32
 }
 
 func (m *ExecutorMemoryMock) Get(address uint32) uint32 {

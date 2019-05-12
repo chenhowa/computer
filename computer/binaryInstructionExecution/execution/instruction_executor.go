@@ -22,8 +22,8 @@ type RiscVInstructionExecutor struct {
 type instructionManager interface {
 	getCurrentInstructionAddress() uint32
 	getNextInstructionAddress() uint32
-	addOffset(offset uint32)
-	loadInstructionAddress(newAddress uint32)
+	addOffsetForNextInstructionAddress(offset uint32)
+	loadAsNextInstructionAddress(newAddress uint32)
 }
 
 type instructionOperator interface {
@@ -64,21 +64,11 @@ type instructionReadWriteMemory interface {
 	instructionWriteMemory
 }
 
-// The value of register 0 should always be 0
+/* resetRegisterZero resets the value of register 0 to 0,
+since according to RiscV, the value of register 0 should always be 0 */
 func (ex *RiscVInstructionExecutor) resetRegisterZero() {
 	ex.operator.andImmediate(0, 0, 0)
 }
-
-/*
-func (ex *RiscVInstructionExecutor) execute(memory instructionReadWriteMemory) {
-	instruction := ex.instructionManager.getInstruction(memory)
-	ex.instructionManager.incrementInstructionAddress()
-	ex.executeInstruction(instruction, memory)
-}
-
-func (ex *RiscVInstructionExecutor) executeInstruction(instruction uint32, memory instructionReadWriteMemory) {
-	blah
-}*/
 
 /*Get allows caller to read the value of register `reg`. In RiscV, any of the 32 registers can be read,
 but the 0 register cannot be written to -- the value of the 0 register is always 0
@@ -287,7 +277,7 @@ the 12 lowest bits of `immediate` are added to the pc through the `manager`
 func (ex *RiscVInstructionExecutor) BranchEqual(reg1 uint, reg2 uint, immediate uint32, manager instructionManager) {
 	defer ex.resetRegisterZero()
 	if ex.Get(reg1) == ex.Get(reg2) {
-		manager.addOffset(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
+		manager.addOffsetForNextInstructionAddress(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
 	}
 }
 
@@ -297,7 +287,7 @@ the 12 lowest bits of `immediate` are added to the pc through the `manager`
 func (ex *RiscVInstructionExecutor) BranchNotEqual(reg1 uint, reg2 uint, immediate uint32, manager instructionManager) {
 	defer ex.resetRegisterZero()
 	if ex.Get(reg1) == ex.Get(reg2) {
-		manager.addOffset(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
+		manager.addOffsetForNextInstructionAddress(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
 	}
 }
 
@@ -307,7 +297,7 @@ the 12 lowest bits of `immediate` are added to the pc through the `manager`
 func (ex *RiscVInstructionExecutor) BranchLessThan(reg1 uint, reg2 uint, immediate uint32, manager instructionManager) {
 	defer ex.resetRegisterZero()
 	if int32(ex.Get(reg1)) < int32(ex.Get(reg2)) {
-		manager.addOffset(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
+		manager.addOffsetForNextInstructionAddress(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
 	}
 }
 
@@ -317,7 +307,7 @@ the 12 lowest bits of `immediate` are added to the pc through the `manager`
 func (ex *RiscVInstructionExecutor) BranchLessThanUnsigned(reg1 uint, reg2 uint, immediate uint32, manager instructionManager) {
 	defer ex.resetRegisterZero()
 	if ex.Get(reg1) < ex.Get(reg2) {
-		manager.addOffset(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
+		manager.addOffsetForNextInstructionAddress(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
 	}
 }
 
@@ -327,7 +317,7 @@ the 12 lowest bits of `immediate` are added to the pc through the `manager`
 func (ex *RiscVInstructionExecutor) BranchGreaterThanOrEqual(reg1 uint, reg2 uint, immediate uint32, manager instructionManager) {
 	defer ex.resetRegisterZero()
 	if int32(ex.Get(reg1)) >= int32(ex.Get(reg2)) {
-		manager.addOffset(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
+		manager.addOffsetForNextInstructionAddress(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
 	}
 }
 
@@ -337,7 +327,7 @@ the 12 lowest bits of `immediate` are added to the pc through the `manager`
 func (ex *RiscVInstructionExecutor) BranchGreaterThanOrEqualUnsigned(reg1 uint, reg2 uint, immediate uint32, manager instructionManager) {
 	defer ex.resetRegisterZero()
 	if ex.Get(reg1) >= ex.Get(reg2) {
-		manager.addOffset(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
+		manager.addOffsetForNextInstructionAddress(Utils.KeepBitsInInclusiveRange(immediate, 0, 11))
 	}
 }
 
@@ -351,7 +341,7 @@ func (ex *RiscVInstructionExecutor) JumpAndLink(dest uint, pcOffset uint32, mana
 	ex.operator.orImmediate(dest, dest, manager.getNextInstructionAddress())
 
 	lower20Bits := Utils.SignExtendUint32WithBit(Utils.KeepBitsInInclusiveRange(pcOffset, 0, 19), 19)
-	manager.addOffset(lower20Bits)
+	manager.addOffsetForNextInstructionAddress(lower20Bits)
 }
 
 /*JumpAndLinkRegister saves the address of the next instruction into the
@@ -366,7 +356,7 @@ func (ex *RiscVInstructionExecutor) JumpAndLinkRegister(dest uint, basereg uint,
 
 	lower12Bits := Utils.SignExtendUint32WithBit(Utils.KeepBitsInInclusiveRange(pcOffset, 0, 11), 11)
 	address := Utils.KeepBitsInInclusiveRange(lower12Bits+ex.Get(basereg), 1, 31)
-	manager.loadInstructionAddress(address)
+	manager.loadAsNextInstructionAddress(address)
 }
 
 /*LoadWord compiles an address from sign-extended lower 12 bits of offset, adds that to uint32 stored in
