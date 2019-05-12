@@ -16,6 +16,11 @@ type ExecutorMemoryMock struct {
 	val uint32
 }
 
+type ExecutorInstructionManagerMock struct {
+	mock.Mock
+	pcAddress uint32
+}
+
 const resultRegister = 30
 
 type InstructionExecutorSuite struct {
@@ -587,4 +592,8 @@ func (suite *InstructionExecutorSuite) TestRightShiftArithmetic() {
 	suite.LoadMemoryIntoRegisterX(2)
 	suite.executor.ShiftRightArithmetic(resultRegister, 1, 2)
 	suite.assertRegisterEquals(resultRegister, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 31))
+}
+
+func (suite *InstructionExecutorSuite) TestBranchEqual() {
+
 }

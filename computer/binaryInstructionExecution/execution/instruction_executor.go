@@ -22,8 +22,6 @@ type RiscVInstructionExecutor struct {
 type instructionManager interface {
 	getCurrentInstructionAddress() uint32
 	getNextInstructionAddress() uint32
-	getCurrentInstruction(memory instructionReadMemory) uint32
-	incrementInstructionAddress()
 	addOffset(offset uint32)
 	loadInstructionAddress(newAddress uint32)
 }
