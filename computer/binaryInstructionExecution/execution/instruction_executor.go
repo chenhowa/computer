@@ -15,6 +15,14 @@ type RiscVInstructionExecutor struct {
 	//instructionManager instructionManager
 }
 
+type executionEnvManager interface {
+	executeCall()
+}
+
+type debugEnvManager interface {
+	debugBreak()
+}
+
 type csrOperator interface {
 	get(reg uint) uint32
 	set(reg uint, val uint32)
@@ -550,15 +558,17 @@ func (ex *RiscVInstructionExecutor) CsrReadAndClearImmediate(dest uint, immediat
 According to the RiscV spec, how the arguments are passed is up to the execution environment, but will
 typically be in a defined set of the registers.
 */
-func (ex *RiscVInstructionExecutor) EnvCall() {
+func (ex *RiscVInstructionExecutor) EnvCall(env executionEnvManager) {
 	defer ex.resetRegisterZero()
 
+	env.executeCall()
 }
 
 /*EnvBreak is used by user-level level programs to transfer control to a supporting debugging environment.
 This seems like it is similar toa the EnvCall, in that arguments can be passed in the registers according to the
 debugging environment's ABI. */
-func (ex *RiscVInstructionExecutor) EnvBreak() {
+func (ex *RiscVInstructionExecutor) EnvBreak(env debugEnvManager) {
 	defer ex.resetRegisterZero()
 
+	env.debugBreak()
 }
