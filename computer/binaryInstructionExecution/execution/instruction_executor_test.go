@@ -18,6 +18,21 @@ type InstructionExecutorSuite struct {
 	executor RiscVInstructionExecutor
 	memory   *ExecutorMemoryMock
 	manager  *ExecutorInstructionManagerMock
+	csr      *ExecutorCsrManagerMock
+}
+
+type ExecutorCsrManagerMock struct {
+	mock.Mock
+	val uint32
+}
+
+func (m *ExecutorCsrManagerMock) get(reg uint) uint32 {
+	m.Called(reg)
+	return m.val
+}
+
+func (m *ExecutorCsrManagerMock) set(reg uint, val uint32) {
+	m.Called(reg, val)
 }
 
 type ExecutorInstructionManagerMock struct {
@@ -80,6 +95,11 @@ func (suite *InstructionExecutorSuite) SetupTest() {
 		pcAddress: 0,
 	}
 	suite.manager = &manager
+
+	csr := ExecutorCsrManagerMock{
+		val: 22,
+	}
+	suite.csr = &csr
 }
 
 func (suite *InstructionExecutorSuite) assertRegisterEquals(register uint, expected uint32) {
@@ -854,4 +874,44 @@ func (suite *InstructionExecutorSuite) TestJumpAndLinkRegister() {
 	suite.executor.JumpAndLinkRegister(30, 1, Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 10), suite.manager)
 	suite.assertRegisterEquals(30, 2+4)
 	suite.assertManagerAddressEquals(Util.KeepBitsInInclusiveRange(math.MaxUint32, 1, 10))
+}
+
+func (suite *InstructionExecutorSuite) TestCsrReadAndWrite() {
+	suite.csr.val = 15
+	suite.csr.On("get", mock.Anything)
+	suite.csr.On("set", uint(3), uint32(2))
+	suite.executor.CsrReadAndWrite(0, 2, 3, suite.csr)
+	suite.csr.AssertNotCalled(suite.T(), "get", mock.Anything)
+	suite.csr.AssertCalled(suite.T(), "set", uint(3), uint32(2))
+	suite.assertRegisterEquals(2, 2)
+	suite.assertRegisterEquals(0, 0)
+
+	suite.csr.val = 16
+	suite.csr.On("get", uint(4))
+	suite.csr.On("set", uint(4), uint32(2))
+	suite.executor.CsrReadAndWrite(1, 2, 4, suite.csr)
+	suite.csr.AssertCalled(suite.T(), "get", uint(4))
+	suite.csr.AssertCalled(suite.T(), "set", uint(4), uint32(2))
+	suite.assertRegisterEquals(1, 16)
+	suite.assertRegisterEquals(2, 2)
+}
+
+func (suite *InstructionExecutorSuite) TestCsrReadAndSet() {
+
+}
+
+func (suite *InstructionExecutorSuite) TestCsrReadAndClear() {
+
+}
+
+func (suite *InstructionExecutorSuite) TestCsrReadAndWriteImmediate() {
+
+}
+
+func (suite *InstructionExecutorSuite) TestCsrReadAndSetImmediate() {
+
+}
+
+func (suite *InstructionExecutorSuite) TestCsrReadAndClearImmediate() {
+
 }

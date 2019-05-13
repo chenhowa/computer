@@ -12,7 +12,6 @@ executing the instruction using an internal object.
 */
 type RiscVInstructionExecutor struct {
 	operator instructionOperator
-	//instructionManager instructionManager
 }
 
 type executionEnvManager interface {
@@ -565,7 +564,7 @@ func (ex *RiscVInstructionExecutor) EnvCall(env executionEnvManager) {
 }
 
 /*EnvBreak is used by user-level level programs to transfer control to a supporting debugging environment.
-This seems like it is similar toa the EnvCall, in that arguments can be passed in the registers according to the
+This seems like it is similar to a the EnvCall, in that arguments can be passed in the registers according to the
 debugging environment's ABI. */
 func (ex *RiscVInstructionExecutor) EnvBreak(env debugEnvManager) {
 	defer ex.resetRegisterZero()
