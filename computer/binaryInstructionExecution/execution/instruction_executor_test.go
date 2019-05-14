@@ -15,10 +15,28 @@ const resultRegister = 30
 
 type InstructionExecutorSuite struct {
 	suite.Suite
-	executor RiscVInstructionExecutor
-	memory   *ExecutorMemoryMock
-	manager  *ExecutorInstructionManagerMock
-	csr      *ExecutorCsrManagerMock
+	executor     RiscVInstructionExecutor
+	memory       *ExecutorMemoryMock
+	manager      *ExecutorInstructionManagerMock
+	csr          *ExecutorCsrManagerMock
+	execManager  *ExecManagerMock
+	debugManager *DebugManagerMock
+}
+
+type DebugManagerMock struct {
+	mock.Mock
+}
+
+func (m *DebugManagerMock) debugBreak() {
+	m.Called()
+}
+
+type ExecManagerMock struct {
+	mock.Mock
+}
+
+func (m *ExecManagerMock) executeCall() {
+	m.Called()
 }
 
 type ExecutorCsrManagerMock struct {
@@ -100,6 +118,12 @@ func (suite *InstructionExecutorSuite) SetupTest() {
 		val: 22,
 	}
 	suite.csr = &csr
+
+	execManager := ExecManagerMock{}
+	suite.execManager = &execManager
+
+	debugManager := DebugManagerMock{}
+	suite.debugManager = &debugManager
 }
 
 func (suite *InstructionExecutorSuite) assertRegisterEquals(register uint, expected uint32) {
@@ -913,7 +937,6 @@ func (suite *InstructionExecutorSuite) TestCsrReadAndSet() {
 	suite.csr.AssertCalled(suite.T(), "set", uint(3), uint32(10))
 	suite.assertRegisterEquals(30, 8)
 
-
 }
 
 func (suite *InstructionExecutorSuite) TestCsrReadAndClear() {
@@ -976,7 +999,7 @@ func (suite *InstructionExecutorSuite) TestCsrReadAndClearImmediate() {
 	suite.csr.val = 14 //0b1110
 	suite.csr.On("get", uint(4))
 	suite.csr.On("set", mock.Anything, mock.Anything)
-	suite.executor.CsrReadAndClearImmediate(30, 64, 4, suite.csr)   // use immediate 0b100000, to show that the 6th bit is not used
+	suite.executor.CsrReadAndClearImmediate(30, 64, 4, suite.csr) // use immediate 0b100000, to show that the 6th bit is not used
 	suite.csr.AssertCalled(suite.T(), "get", uint(4))
 	suite.csr.AssertNotCalled(suite.T(), "set", mock.Anything, mock.Anything)
 	suite.assertRegisterEquals(30, 14)
@@ -984,8 +1007,21 @@ func (suite *InstructionExecutorSuite) TestCsrReadAndClearImmediate() {
 	suite.csr.val = 15 // 0b1111
 	suite.csr.On("get", uint(3))
 	suite.csr.On("set", uint(3), uint32(13))
-	suite.executor.CsrReadAndClearImmediate(30, 66, 3, suite.csr)  // use immediate 0b100010, to show that the 6th bit is not used
+	suite.executor.CsrReadAndClearImmediate(30, 66, 3, suite.csr) // use immediate 0b100010, to show that the 6th bit is not used
 	suite.csr.AssertCalled(suite.T(), "get", uint(3))
 	suite.csr.AssertCalled(suite.T(), "set", uint(3), uint32(13))
 	suite.assertRegisterEquals(30, 15)
+}
+
+func (suite *InstructionExecutorSuite) TestEnvCall() {
+	suite.execManager.On("executeCall").Return()
+	suite.executor.EnvCall(suite.execManager)
+	suite.execManager.AssertCalled(suite.T(), "executeCall")
+}
+
+func (suite *InstructionExecutorSuite) TestEnvBreak() {
+	suite.debugManager.On("debugBreak").Return()
+	suite.executor.EnvBreak(suite.debugManager)
+	suite.debugManager.AssertCalled(suite.T(), "debugBreak")
+
 }
