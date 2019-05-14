@@ -897,21 +897,95 @@ func (suite *InstructionExecutorSuite) TestCsrReadAndWrite() {
 }
 
 func (suite *InstructionExecutorSuite) TestCsrReadAndSet() {
+	suite.csr.val = 4
+	suite.csr.On("get", uint(4))
+	suite.csr.On("set", mock.Anything, mock.Anything)
+	suite.executor.CsrReadAndSet(30, 0, 4, suite.csr)
+	suite.csr.AssertCalled(suite.T(), "get", uint(4))
+	suite.csr.AssertNotCalled(suite.T(), "set", mock.Anything, mock.Anything)
+	suite.assertRegisterEquals(30, 4)
+
+	suite.csr.val = 8 // 0b1000
+	suite.csr.On("get", uint(3))
+	suite.csr.On("set", uint(3), uint32(10))
+	suite.executor.CsrReadAndSet(30, 2, 3, suite.csr)
+	suite.csr.AssertCalled(suite.T(), "get", uint(3))
+	suite.csr.AssertCalled(suite.T(), "set", uint(3), uint32(10))
+	suite.assertRegisterEquals(30, 8)
+
 
 }
 
 func (suite *InstructionExecutorSuite) TestCsrReadAndClear() {
+	suite.csr.val = 14 //0b1110
+	suite.csr.On("get", uint(4))
+	suite.csr.On("set", mock.Anything, mock.Anything)
+	suite.executor.CsrReadAndClear(30, 0, 4, suite.csr)
+	suite.csr.AssertCalled(suite.T(), "get", uint(4))
+	suite.csr.AssertNotCalled(suite.T(), "set", mock.Anything, mock.Anything)
+	suite.assertRegisterEquals(30, 14)
 
+	suite.csr.val = 15 // 0b1111
+	suite.csr.On("get", uint(3))
+	suite.csr.On("set", uint(3), uint32(13))
+	suite.executor.CsrReadAndClear(30, 2, 3, suite.csr)
+	suite.csr.AssertCalled(suite.T(), "get", uint(3))
+	suite.csr.AssertCalled(suite.T(), "set", uint(3), uint32(13))
+	suite.assertRegisterEquals(30, 15)
 }
 
 func (suite *InstructionExecutorSuite) TestCsrReadAndWriteImmediate() {
+	suite.csr.val = 15
+	suite.csr.On("get", mock.Anything)
+	suite.csr.On("set", uint(3), uint32(2))
+	suite.executor.CsrReadAndWriteImmediate(0, 66, 3, suite.csr) //use immediate 0b100010, to show that the 6th bit is not used.
+	suite.csr.AssertNotCalled(suite.T(), "get", mock.Anything)
+	suite.csr.AssertCalled(suite.T(), "set", uint(3), uint32(2))
+	suite.assertRegisterEquals(2, 2)
+	suite.assertRegisterEquals(0, 0)
 
+	suite.csr.val = 16
+	suite.csr.On("get", uint(4))
+	suite.csr.On("set", uint(4), uint32(2))
+	suite.executor.CsrReadAndWriteImmediate(1, 66, 4, suite.csr) //use immediate 0b100010, to show that the 6th bit is not used.
+	suite.csr.AssertCalled(suite.T(), "get", uint(4))
+	suite.csr.AssertCalled(suite.T(), "set", uint(4), uint32(2))
+	suite.assertRegisterEquals(1, 16)
+	suite.assertRegisterEquals(2, 2)
 }
 
 func (suite *InstructionExecutorSuite) TestCsrReadAndSetImmediate() {
+	suite.csr.val = 4
+	suite.csr.On("get", uint(4))
+	suite.csr.On("set", mock.Anything, mock.Anything)
+	suite.executor.CsrReadAndSetImmediate(30, 64, 4, suite.csr) // use immediate 0b100000, to show that the 6th bit is not used
+	suite.csr.AssertCalled(suite.T(), "get", uint(4))
+	suite.csr.AssertNotCalled(suite.T(), "set", mock.Anything, mock.Anything)
+	suite.assertRegisterEquals(30, 4)
 
+	suite.csr.val = 8 // 0b1000
+	suite.csr.On("get", uint(3))
+	suite.csr.On("set", uint(3), uint32(10))
+	suite.executor.CsrReadAndSetImmediate(30, 66, 3, suite.csr) // use immediate 0b100010, to show that the 6th bit is not used
+	suite.csr.AssertCalled(suite.T(), "get", uint(3))
+	suite.csr.AssertCalled(suite.T(), "set", uint(3), uint32(10))
+	suite.assertRegisterEquals(30, 8)
 }
 
 func (suite *InstructionExecutorSuite) TestCsrReadAndClearImmediate() {
+	suite.csr.val = 14 //0b1110
+	suite.csr.On("get", uint(4))
+	suite.csr.On("set", mock.Anything, mock.Anything)
+	suite.executor.CsrReadAndClearImmediate(30, 64, 4, suite.csr)   // use immediate 0b100000, to show that the 6th bit is not used
+	suite.csr.AssertCalled(suite.T(), "get", uint(4))
+	suite.csr.AssertNotCalled(suite.T(), "set", mock.Anything, mock.Anything)
+	suite.assertRegisterEquals(30, 14)
 
+	suite.csr.val = 15 // 0b1111
+	suite.csr.On("get", uint(3))
+	suite.csr.On("set", uint(3), uint32(13))
+	suite.executor.CsrReadAndClearImmediate(30, 66, 3, suite.csr)  // use immediate 0b100010, to show that the 6th bit is not used
+	suite.csr.AssertCalled(suite.T(), "get", uint(3))
+	suite.csr.AssertCalled(suite.T(), "set", uint(3), uint32(13))
+	suite.assertRegisterEquals(30, 15)
 }
