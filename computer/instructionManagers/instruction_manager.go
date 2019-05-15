@@ -6,6 +6,18 @@ type PCInstructionManager struct {
 	instructionAddress uint16
 }
 
+/*MakePCInstructionManager initializes a PCInstructionManager with an
+initial instruction address as its NEXT instruction address (not its current one).
+The current instruction address is not valid until manager.IncrementInstructionAddress() is called.
+*/
+func MakePCInstructionManager(initialAddress uint16) PCInstructionManager {
+	manager := PCInstructionManager{
+		instructionAddress: initialAddress - 4,
+	}
+
+	return manager
+}
+
 type managerReadMemory interface {
 	Get(address uint16) uint32
 }
@@ -23,7 +35,7 @@ func (manager *PCInstructionManager) GetCurrentInstruction(memory managerReadMem
 
 /*GetNextInstructionAddress gets the address of the instruction that is immediately AFTER the current instruction
  */
-func (manager *PCInstructionManager) GetNextInstructionAddress(memory managerReadMemory) uint16 {
+func (manager *PCInstructionManager) GetNextInstructionAddress() uint16 {
 	// since each instruction is 4 bytes wide
 	return manager.GetCurrentInstructionAddress() + 4
 }
