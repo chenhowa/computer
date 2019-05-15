@@ -54,8 +54,6 @@ type instructionOperator interface {
 	xorImmediate(dest uint, reg uint, immediate uint32)
 	leftShiftImmediate(dest uint, reg uint, immediate uint32)
 	rightShiftImmediate(dest uint, reg uint, immediate uint32, preserveSign bool)
-	multiply(dest uint, reg1 uint, reg2 uint)
-	divide(destDividend uint, destRem uint, reg1 uint, reg2 uint)
 	get(reg uint) uint32
 }
 
