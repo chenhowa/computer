@@ -5,18 +5,32 @@ import Producer "github.com/chenhowa/os/computer/binaryInstructionExecution/exec
 import Parser "github.com/chenhowa/os/computer/binaryInstructionExecution/instructionParsing"
 
 /*
-This file is tightly coupled with the riscVBinaryInstructionParser
+This file is tightly coupled with the `instructionParsing` and `executionFactoryProducers` package.
 */
 
-type riscVBinaryInstructionExecutionFactory struct {
+/*RiscVBinaryInstructionExecutionFactory is responsible for producing executors of instructions that
+can be executed at later times.
+*/
+type RiscVBinaryInstructionExecutionFactory struct {
 	executor Producer.RiscVExecutor
+}
+
+/*MakeRiscVInstructionExecutionFactory is a constructor of an instance of RiscVBinaryInstructionExecutionFactory*/
+func MakeRiscVInstructionExecutionFactory(executor Producer.RiscVExecutor) RiscVBinaryInstructionExecutionFactory {
+	factory := RiscVBinaryInstructionExecutionFactory{
+		executor: executor,
+	}
+
+	return factory
 }
 
 type binaryExecutor interface {
 	Execute()
 }
 
-func (factory *riscVBinaryInstructionExecutionFactory) Produce(instruction uint32) binaryExecutor {
+/*Produce generates an executor that will execute the `instruction`
+ */
+func (factory *RiscVBinaryInstructionExecutionFactory) Produce(instruction uint32) binaryExecutor {
 	parser := Parser.RiscVBinaryInstructionParser{}
 	result := parser.Parse(instruction)
 
@@ -42,7 +56,7 @@ func (factory *riscVBinaryInstructionExecutionFactory) Produce(instruction uint3
 	return executor
 }
 
-func (factory *riscVBinaryInstructionExecutionFactory) produceI(result Parser.RiscVBinaryParseResult, ex Producer.RiscVExecutor) binaryExecutor {
+func (factory *RiscVBinaryInstructionExecutionFactory) produceI(result Parser.RiscVBinaryParseResult, ex Producer.RiscVExecutor) binaryExecutor {
 
 	var executor = Producer.ExecutorI{
 		Executor: ex,
@@ -52,7 +66,7 @@ func (factory *riscVBinaryInstructionExecutionFactory) produceI(result Parser.Ri
 	return &executor
 }
 
-func (factory *riscVBinaryInstructionExecutionFactory) produceU(result Parser.RiscVBinaryParseResult, ex Producer.RiscVExecutor) binaryExecutor {
+func (factory *RiscVBinaryInstructionExecutionFactory) produceU(result Parser.RiscVBinaryParseResult, ex Producer.RiscVExecutor) binaryExecutor {
 	var executor = Producer.ExecutorU{
 		Executor: ex,
 		Result:   result,
@@ -61,7 +75,7 @@ func (factory *riscVBinaryInstructionExecutionFactory) produceU(result Parser.Ri
 	return &executor
 }
 
-func (factory *riscVBinaryInstructionExecutionFactory) produceR(result Parser.RiscVBinaryParseResult, ex Producer.RiscVExecutor) binaryExecutor {
+func (factory *RiscVBinaryInstructionExecutionFactory) produceR(result Parser.RiscVBinaryParseResult, ex Producer.RiscVExecutor) binaryExecutor {
 
 	var executor = Producer.ExecutorR{
 		Executor: ex,
@@ -71,7 +85,7 @@ func (factory *riscVBinaryInstructionExecutionFactory) produceR(result Parser.Ri
 	return &executor
 }
 
-func (factory *riscVBinaryInstructionExecutionFactory) produceJ(result Parser.RiscVBinaryParseResult, ex Producer.RiscVExecutor) binaryExecutor {
+func (factory *RiscVBinaryInstructionExecutionFactory) produceJ(result Parser.RiscVBinaryParseResult, ex Producer.RiscVExecutor) binaryExecutor {
 
 	var executor = Producer.ExecutorJ{
 		Executor: ex,
@@ -81,7 +95,7 @@ func (factory *riscVBinaryInstructionExecutionFactory) produceJ(result Parser.Ri
 	return &executor
 }
 
-func (factory *riscVBinaryInstructionExecutionFactory) produceB(result Parser.RiscVBinaryParseResult, ex Producer.RiscVExecutor) binaryExecutor {
+func (factory *RiscVBinaryInstructionExecutionFactory) produceB(result Parser.RiscVBinaryParseResult, ex Producer.RiscVExecutor) binaryExecutor {
 
 	var executor = Producer.ExecutorB{
 		Executor: factory.executor,
@@ -91,7 +105,7 @@ func (factory *riscVBinaryInstructionExecutionFactory) produceB(result Parser.Ri
 	return &executor
 }
 
-func (factory *riscVBinaryInstructionExecutionFactory) produceS(result Parser.RiscVBinaryParseResult, ex Producer.RiscVExecutor) binaryExecutor {
+func (factory *RiscVBinaryInstructionExecutionFactory) produceS(result Parser.RiscVBinaryParseResult, ex Producer.RiscVExecutor) binaryExecutor {
 
 	var executor = Producer.ExecutorS{
 		Executor: factory.executor,
