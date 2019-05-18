@@ -14,7 +14,6 @@ import (
 type ExecutionFactorySuite struct {
 	suite.Suite
 	executorMock *Producer.RiscVExecutorMock
-	builder      *Parser.BinaryInstructionBuilder
 	factory      *RiscVBinaryInstructionExecutionFactory
 }
 
@@ -24,20 +23,12 @@ func TestExecutionFactorySuite(t *testing.T) {
 
 func (suite *ExecutionFactorySuite) SetupTest() {
 	suite.executorMock = new(Producer.RiscVExecutorMock)
-	builder := Parser.MakeInstructionBuilder(32)
-	suite.builder = &builder
 	factory := MakeRiscVInstructionExecutionFactory(suite.executorMock)
 	suite.factory = &factory
 }
 
 func (suite *ExecutionFactorySuite) TestInstruction_I_XorImmediate() {
-	builder := suite.builder
-	builder.AddNextXBits(7, uint(Parser.ImmArith))
-	builder.AddNextXBits(5, 15)
-	builder.AddNextXBits(3, uint(Producer.XorI))
-	builder.AddNextXBits(5, 12)
-	builder.AddNextXBits(12, uint(Utils.KeepBitsInInclusiveRange(math.MaxUint32, 2, 11)))
-	instruction := builder.Build()
+	instruction := BuildInstructionI(uint(Parser.ImmArith), 15, uint(Producer.XorI), 12, uint(Utils.KeepBitsInInclusiveRange(math.MaxUint32, 2, 11)))
 
 	suite.executorMock.On("xorImmediate", uint(15), uint(12), Utils.KeepBitsInInclusiveRange(math.MaxUint32, 2, 11))
 	executor := suite.factory.Produce(uint32(instruction))
@@ -46,5 +37,10 @@ func (suite *ExecutionFactorySuite) TestInstruction_I_XorImmediate() {
 }
 
 func (suite *ExecutionFactorySuite) TestInstruction_U_AUIPC() {
+	instruction := BuildInstructionU(uint(Parser.AUIPC), 20, uint(Utils.KeepBitsInInclusiveRange(math.MaxUint32, 1, 19)))
+
+	suite.executorMock.On("addUpperImmediateToPC", uint(20), Utils.KeepBitsInInclusiveRange(math.MaxUint32, 1, 19))
+	suite.factory.Produce(uint32(instruction)).Execute()
+	suite.executorMock.AssertCalled(suite.T(), "addUpperImmediateToPC", uint(20), Utils.KeepBitsInInclusiveRange(math.MaxUint32, 1, 19))
 
 }

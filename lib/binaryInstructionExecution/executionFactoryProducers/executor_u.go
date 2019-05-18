@@ -21,7 +21,7 @@ func (ex *ExecutorU) Execute() {
 	case Parser.LUI:
 		ex.Executor.loadUpperImmediate(dest, immediate)
 	case Parser.AUIPC:
-		ex.Executor.loadUpperImmediate(dest, immediate)
+		ex.Executor.addUpperImmediateToPC(dest, immediate)
 	default:
 		panic(fmt.Sprintf("executionFunctionU: %d opcode not found", ex.Result.OpCode))
 	}
