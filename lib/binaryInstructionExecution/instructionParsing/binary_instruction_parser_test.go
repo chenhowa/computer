@@ -108,6 +108,31 @@ func (suite *ParseSuite) TestParseRegArith() {
 	assert.Equal(expected, actual)
 }
 
+func (suite *ParseSuite) TestParseRegArith_Error() {
+	assert := assert.New(suite.T())
+
+	suite.builder.AddNextXBits(7, uint(RegArith)) // opcode
+	suite.builder.AddNextXBits(5, 11)             // rd (dest)
+	suite.builder.AddNextXBits(3, 9)              // funct3  OVERFLOW: 9 overflows 3 bits!
+	suite.builder.AddNextXBits(5, 4)              // rs1 (src1)
+	suite.builder.AddNextXBits(5, 5)              // rs2 (src2)
+	suite.builder.AddNextXBits(7, 1)              // funct7
+
+	actual := suite.parser.Parse(uint32(suite.builder.Build()))
+
+	expected := RiscVBinaryParseResult{
+		InstructionType:    R,
+		OpCode:             RegArith,
+		FiveBitDestination: 11,
+		Funct3:             9, // This value is wrong, because it overflows the 3 bits of Funct3
+		FiveBitRegister1:   4,
+		FiveBitRegister2:   5,
+		Funct7:             1,
+	}
+
+	assert.NotEqual(expected, actual)
+}
+
 func (suite *ParseSuite) TestParseJAL() {
 	assert := assert.New(suite.T())
 

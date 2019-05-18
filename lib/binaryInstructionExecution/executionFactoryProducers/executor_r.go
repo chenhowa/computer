@@ -6,7 +6,7 @@ import Parser "github.com/chenhowa/computer/lib/binaryInstructionExecution/instr
 type validOperationR uint
 
 /*These constants define the valid operation codes for
-R-type instructions
+R-type instructions, when func7 is F0
 */
 const (
 	Add validOperationR = iota
@@ -17,7 +17,12 @@ const (
 	Xor
 	SLL
 	SRL
-	Sub
+)
+
+/*These constants define the valid operation codes for
+R-type instructions, when func7 is F0*/
+const (
+	Sub validOperationR = iota
 	SRA
 )
 

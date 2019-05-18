@@ -43,3 +43,21 @@ func KeepBitsInInclusiveRange(num uint32, start uint, end uint) uint32 {
 
 	return (num & majorMask & minorMask)
 }
+
+/*getBitsInInclusiveRange takes a number and extracts the value of a certain set of bits,
+from bit `start` to bit `end`. `start` is assumed to be less than `end`.
+The 0th bit is assumed to be the Least-Significant-Bit (LSB) of `number`
+  	- when `number` = 0b000011100, `start` = 1, `end` = 4, returns 0b000001110 (as uint)
+	- when `number` = 0b000011100, `start` = 0, `end` = 2, returns 0b000000100 (as uint)
+	- when `number` = 0b111000000, `start` = 6, `end` = 8, returns 0b000000111 (as uint)
+*/
+func GetBitsInInclusiveRange(number uint, start uint, end uint) uint {
+	if start > end {
+		panic(fmt.Sprintf("getBitsInInclusiveRange: start > end, start was %d, end was %d", start, end))
+	}
+
+	shifted := number >> start
+	var masklength = end - start
+	var mask uint = (1 << ((masklength) + 1)) - 1
+	return shifted & mask
+}
