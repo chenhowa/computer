@@ -3,7 +3,7 @@ package execution
 import (
 	"math"
 
-	Operator "github.com/chenhowa/os/computer/binaryInstructionExecution/execution/operators"
+	Operator "github.com/chenhowa/computer/lib/binaryInstructionExecution/execution/operators"
 )
 
 /*adaptedOperator is a an adapter for the imported Operator struct to help fit

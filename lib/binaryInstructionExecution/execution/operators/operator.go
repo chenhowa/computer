@@ -1,7 +1,7 @@
 package operators
 
 import (
-	Utils "github.com/chenhowa/os/computer/binaryInstructionExecution/bitUtils"
+	Utils "github.com/chenhowa/computer/lib/binaryInstructionExecution/bitUtils"
 )
 
 /*Operator represents operations a set of 32 registers.

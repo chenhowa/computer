@@ -3,7 +3,7 @@ package execution
 import (
 	"math"
 
-	Utils "github.com/chenhowa/os/computer/binaryInstructionExecution/bitUtils"
+	Utils "github.com/chenhowa/computer/lib/binaryInstructionExecution/bitUtils"
 )
 
 /*The RiscVInstructionExecutor is responsible for taking the operands of

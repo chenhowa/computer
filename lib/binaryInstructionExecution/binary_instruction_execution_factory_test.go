@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	//"github.com/stretchr/testify/assert"
-	Utils "github.com/chenhowa/os/computer/binaryInstructionExecution/bitUtils"
-	Producer "github.com/chenhowa/os/computer/binaryInstructionExecution/executionFactoryProducers"
-	Parser "github.com/chenhowa/os/computer/binaryInstructionExecution/instructionParsing"
+	Utils "github.com/chenhowa/computer/lib/binaryInstructionExecution/bitUtils"
+	Producer "github.com/chenhowa/computer/lib/binaryInstructionExecution/executionFactoryProducers"
+	Parser "github.com/chenhowa/computer/lib/binaryInstructionExecution/instructionParsing"
 	"github.com/stretchr/testify/suite"
 )
 

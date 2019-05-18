@@ -1,8 +1,8 @@
 package binaryInstructionExecution
 
 import "fmt"
-import Producer "github.com/chenhowa/os/computer/binaryInstructionExecution/executionFactoryProducers"
-import Parser "github.com/chenhowa/os/computer/binaryInstructionExecution/instructionParsing"
+import Producer "github.com/chenhowa/computer/lib/binaryInstructionExecution/executionFactoryProducers"
+import Parser "github.com/chenhowa/computer/lib/binaryInstructionExecution/instructionParsing"
 
 /*
 This file is tightly coupled with the `instructionParsing` and `executionFactoryProducers` package.

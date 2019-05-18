@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	Util "github.com/chenhowa/os/computer/binaryInstructionExecution/bitUtils"
+	Util "github.com/chenhowa/computer/lib/binaryInstructionExecution/bitUtils"
 )
 
 const resultRegister = 30

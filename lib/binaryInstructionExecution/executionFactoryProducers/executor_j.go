@@ -1,6 +1,6 @@
 package executionFactoryProducers
 
-import Parser "github.com/chenhowa/os/computer/binaryInstructionExecution/instructionParsing"
+import Parser "github.com/chenhowa/computer/lib/binaryInstructionExecution/instructionParsing"
 
 import "fmt"
 

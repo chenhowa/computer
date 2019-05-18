@@ -3,7 +3,7 @@ package executionFactoryProducers
 import (
 	"fmt"
 
-	Parser "github.com/chenhowa/os/computer/binaryInstructionExecution/instructionParsing"
+	Parser "github.com/chenhowa/computer/lib/binaryInstructionExecution/instructionParsing"
 )
 
 /*ExecutorB contains instructions for executing

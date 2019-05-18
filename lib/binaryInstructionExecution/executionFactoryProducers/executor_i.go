@@ -1,7 +1,7 @@
 package executionFactoryProducers
 
 import "fmt"
-import Parser "github.com/chenhowa/os/computer/binaryInstructionExecution/instructionParsing"
+import Parser "github.com/chenhowa/computer/lib/binaryInstructionExecution/instructionParsing"
 
 /*ExecutorI stores instructions for executing a given set
 of commands for an I-type instruction ParseResult

@@ -1,7 +1,7 @@
 package executionFactoryProducers
 
 import "fmt"
-import Parser "github.com/chenhowa/os/computer/binaryInstructionExecution/instructionParsing"
+import Parser "github.com/chenhowa/computer/lib/binaryInstructionExecution/instructionParsing"
 
 /*ExecutorU stores execution of a
 U-type instruction ParseResult
