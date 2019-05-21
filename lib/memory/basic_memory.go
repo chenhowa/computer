@@ -1,6 +1,8 @@
 package memory
 
 import (
+	"math"
+
 	Utils "github.com/chenhowa/computer/lib/binaryInstructionExecution/bitUtils"
 )
 
@@ -10,14 +12,14 @@ as are writes
 */
 type BasicMemory struct {
 	memory     [65536]uint8
-	memorySize uint16
+	maxAddress uint16
 }
 
 /*MakeBasicMemory constructs an instance of BasicMemory, where
 all memory is default-initialized to 0*/
-func MakeBasicMemory(memorySize uint16) BasicMemory {
+func MakeBasicMemory(maxAddress uint16) BasicMemory {
 	memory := BasicMemory{
-		memorySize: memorySize,
+		maxAddress: maxAddress,
 	}
 	return memory
 }
@@ -26,14 +28,14 @@ func MakeBasicMemory(memorySize uint16) BasicMemory {
 If reading that doubleword involves reading from some invalid addresses,
 the invalid addresses are regarded as having value `0`*/
 func (m *BasicMemory) Get(address uint16) uint32 {
-	if !(address < m.memorySize) {
+	if !(uint(address) < m.GetAddressSpaceSize()) {
 		panic("Get: address was outside addressable memory")
 	}
 
 	var byteCount uint16
 	var val uint32
 	for ; byteCount < 4; byteCount++ {
-		if (address + byteCount) < m.memorySize {
+		if uint(address+byteCount) < m.GetAddressSpaceSize() {
 			val += uint32(m.memory[address+byteCount]) << (8 * byteCount)
 		} else {
 			break
@@ -49,18 +51,18 @@ write more than 32 bits will write at most 32 bits. If memory runs out before `b
 are written, no explicit error occurs. The caller can detect this through the return value, which is the number
 of bits successfully written*/
 func (m *BasicMemory) Set(address uint16, val uint32, bitsToWrite uint) NumberOfBitsWritten {
-	if !(address < m.memorySize) {
+	if !(uint(address) < m.GetAddressSpaceSize()) {
 		panic("Set: address was outside addressable memory")
 	}
 
-	var bitsWritten NumberOfBitsWritten = 0
+	var bitsWritten NumberOfBitsWritten
 
 	var trackedAddress = address
 	for uint(bitsWritten) < bitsToWrite {
-		if !(trackedAddress < m.memorySize) {
+		if !(uint(trackedAddress) < m.GetAddressSpaceSize()) {
 			break
-		} else if bitsLeft := uint(bitsWritten) - bitsToWrite; bitsLeft < 8 {
-			keepTopBitsMask := uint8(Utils.KeepBitsInInclusiveRange(uint32(m.memory[trackedAddress]), bitsLeft, 8))
+		} else if bitsLeft := bitsToWrite - uint(bitsWritten); bitsLeft < 8 {
+			keepTopBitsMask := uint8(Utils.KeepBitsInInclusiveRange(uint32(math.MaxUint32), bitsLeft, 7))
 			m.memory[trackedAddress] = (m.memory[trackedAddress] & keepTopBitsMask) |
 				uint8(Utils.GetBitsInInclusiveRange(uint(val), uint(bitsWritten), uint(bitsWritten)+bitsLeft-1))
 			bitsWritten += NumberOfBitsWritten(bitsLeft)
@@ -79,5 +81,5 @@ func (m *BasicMemory) Set(address uint16, val uint32, bitsToWrite uint) NumberOf
 it returns <maximum valid address + 1>
 */
 func (m *BasicMemory) GetAddressSpaceSize() uint {
-	return uint(m.memorySize)
+	return uint(m.maxAddress) + 1
 }

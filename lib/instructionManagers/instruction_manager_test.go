@@ -23,7 +23,7 @@ type InstructionManagerSuite struct {
 	memory  *MemoryMock
 }
 
-func TestBuilderSuite(t *testing.T) {
+func TestInstructionManagerSuite(t *testing.T) {
 	suite.Run(t, new(InstructionManagerSuite))
 }
 
