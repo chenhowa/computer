@@ -8,7 +8,17 @@ type PanicMemory32 struct {
 }
 
 type errorSink interface {
-	handle(message interface{})
+	Handle(message interface{})
+}
+
+/*MakePanicMemory32 is a constructor for PanicMemory32*/
+func MakePanicMemory32(memory basicMemory, sink errorSink) PanicMemory32 {
+	panicMemory := PanicMemory32{
+		memory:    memory,
+		errorSink: sink,
+	}
+
+	return panicMemory
 }
 
 /*Get attempts to get the value from memory at `address`
@@ -17,7 +27,7 @@ func (m *PanicMemory32) Get(address uint32) (v uint32) {
 	defer func() {
 		if r := recover(); r != nil {
 			v = 0
-			m.errorSink.handle(r)
+			m.errorSink.Handle(r)
 		}
 	}()
 
@@ -32,7 +42,7 @@ func (m *PanicMemory32) Set(address uint32, val uint32, bitsToWrite uint) (n Num
 	defer func() {
 		if r := recover(); r != nil {
 			n = 0
-			m.errorSink.handle(r)
+			m.errorSink.Handle(r)
 		}
 	}()
 

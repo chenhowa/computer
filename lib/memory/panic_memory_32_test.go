@@ -34,7 +34,7 @@ type MockErrorSink struct {
 	mock.Mock
 }
 
-func (es *MockErrorSink) handle(message interface{}) {
+func (es *MockErrorSink) Handle(message interface{}) {
 	es.Called(message)
 }
 
@@ -65,22 +65,22 @@ func (suite *PanicMemorySuite) TestSet() {
 	assert := assert.New(suite.T())
 	result := suite.memory.Set(5, 5, 5)
 	assert.Equal(NumberOfBitsWritten(20), result)
-	suite.sink.AssertNotCalled(suite.T(), "handle", mock.Anything)
+	suite.sink.AssertNotCalled(suite.T(), "Handle", mock.Anything)
 
-	suite.sink.On("handle", mock.Anything)
+	suite.sink.On("Handle", mock.Anything)
 	result = suite.memory.Set(11, 5, 5)
 	assert.Equal(NumberOfBitsWritten(0), result)
-	suite.sink.AssertCalled(suite.T(), "handle", mock.Anything)
+	suite.sink.AssertCalled(suite.T(), "Handle", mock.Anything)
 }
 
 func (suite *PanicMemorySuite) TestGet() {
 	assert := assert.New(suite.T())
 	result := suite.memory.Get(5)
 	assert.Equal(uint32(5), result)
-	suite.sink.AssertNotCalled(suite.T(), "handle", mock.Anything)
+	suite.sink.AssertNotCalled(suite.T(), "Handle", mock.Anything)
 
-	suite.sink.On("handle", mock.Anything)
+	suite.sink.On("Handle", mock.Anything)
 	result = suite.memory.Get(11)
 	assert.Equal(uint32(0), result)
-	suite.sink.AssertCalled(suite.T(), "handle", mock.Anything)
+	suite.sink.AssertCalled(suite.T(), "Handle", mock.Anything)
 }
