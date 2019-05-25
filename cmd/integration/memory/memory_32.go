@@ -1,8 +1,6 @@
 package memory
 
 import (
-	"math"
-
 	Adapters "github.com/chenhowa/computer/cmd/integration/memory/adapters"
 	Memory "github.com/chenhowa/computer/lib/memory"
 )
@@ -28,7 +26,7 @@ func MakeMemory32(maxAddress uint16, sink errorSink) Memory32 {
 	memory := Memory32{}
 	errorSink := sink
 
-	basicMemory := Adapters.MakeBasicMemory16Adapted(math.MaxUint16)
+	basicMemory := Adapters.MakeBasicMemory16Adapted(maxAddress)
 
 	panicMemory := Memory.MakePanicMemory32(&basicMemory, errorSink)
 	memory.memory = &panicMemory

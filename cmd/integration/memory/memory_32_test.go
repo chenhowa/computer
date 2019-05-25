@@ -50,6 +50,12 @@ func (suite *Memory32Suite) TestGet() {
 	suite.AssertMemoryAtAddressIs(1, math.MaxUint8)
 }
 
+func (suite *Memory32Suite) TestGet_Fail() {
+	suite.sink.On("Handle", mock.Anything)
+	suite.memory.Get(21)
+	suite.sink.AssertCalled(suite.T(), "Handle", mock.Anything)
+}
+
 func (suite *Memory32Suite) TestSet() {
 	suite.AssertMemoryAtAddressIs(20, 0)
 	suite.memory.Set(20, math.MaxUint16, 16)
@@ -58,7 +64,7 @@ func (suite *Memory32Suite) TestSet() {
 }
 
 func (suite *Memory32Suite) TestSet_Fail() {
-	suite.AssertMemoryAtAddressIs(21, 0)
+	suite.sink.On("Handle", mock.Anything)
 	suite.memory.Set(21, math.MaxUint16, 16)
-	suite.AssertMemoryAtAddressIs(21, math.MaxUint8)
+	suite.sink.AssertCalled(suite.T(), "Handle", mock.Anything)
 }
