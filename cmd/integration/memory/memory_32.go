@@ -11,6 +11,7 @@ import (
 Internally, however, AT MOST only the first 16-bits of memory are valid. This is because
 the intent is to simulate 16-bit memory, even though the RISC-V 32-bit instruction
 set is being used. After all, who can guarantee the amount of RAM available to the CPU?
+Also, memory is byte-addressable.
 */
 type Memory32 struct {
 	sink   errorSink

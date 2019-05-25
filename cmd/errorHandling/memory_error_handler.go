@@ -34,3 +34,21 @@ func (h *MemoryErrorHandler) Handle(message interface{}) {
 		panic(fmt.Sprintf("%s", message))
 	}
 }
+
+/*HasErrors returns whether this memory error stores any errors.
+ */
+func (h *MemoryErrorHandler) HasErrors() bool {
+	return h.storage.GetErrorCount() > 0
+}
+
+/*GetErrorCount returns the count of memory errors
+ */
+func (h *MemoryErrorHandler) GetErrorCount() uint {
+	return h.storage.GetErrorCount()
+}
+
+/*ClearErrors clears the errors -- the error count will go to 0, and HasErrors will go back to false
+ */
+func (h *MemoryErrorHandler) ClearErrors() {
+	h.storage = MakeStorageErrorHandler(uint8(h.storage.GetMaxErrorNumber()))
+}

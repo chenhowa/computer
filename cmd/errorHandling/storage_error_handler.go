@@ -1,6 +1,7 @@
 package errorHandling
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -68,5 +69,21 @@ func (h *StorageErrorHandler) GetErrorCount() uint {
 
 /*GetErrorCapacity returns the maximum number of errors the handler can hold*/
 func (h *StorageErrorHandler) GetErrorCapacity() uint {
-	return uint(h.maxError) + 1
+	return h.GetMaxErrorNumber() + 1
+}
+
+/*GetError returns the error code and message for a particular stored error.
+ */
+func (h *StorageErrorHandler) GetError(number uint8) (uint, string, error) {
+	if uint(number) < h.GetErrorCount() {
+		e := h.errors[number]
+		return e.code, e.message, nil
+	} else {
+		return 0, "", errors.New("Invalid error number")
+	}
+}
+
+/*GetMaxErrorNumber returns the max error number*/
+func (h *StorageErrorHandler) GetMaxErrorNumber() uint {
+	return uint(h.maxError)
 }
