@@ -35,7 +35,7 @@ func (m *BasicMemory) Get(address uint16) uint32 {
 	var byteCount uint16
 	var val uint32
 	for ; byteCount < 4; byteCount++ {
-		if uint(address+byteCount) < m.GetAddressSpaceSize() {
+		if uint(address)+uint(byteCount) < m.GetAddressSpaceSize() {
 			val += uint32(m.memory[address+byteCount]) << (8 * byteCount)
 		} else {
 			break

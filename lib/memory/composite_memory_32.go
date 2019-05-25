@@ -60,6 +60,8 @@ func (m *CompositeMemory32) Set(address uint32, val uint32, bitsToWrite uint) er
 		bitsWritten := m.memory.Set(address, val, bitsToWrite)
 		return m.furtherMemory.Set(0, val>>bitsWritten, bitsToWrite-uint(bitsWritten))
 	} else {
+		/*If the write is not supposed to be done within this node, we'll try to
+		do it in the next node*/
 		return m.furtherMemory.Set(address-currentMemorySize, val, bitsToWrite)
 	}
 }
