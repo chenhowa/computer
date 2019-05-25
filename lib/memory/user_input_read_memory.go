@@ -11,12 +11,12 @@ type UserInputReadMemory struct {
 }
 
 type memory interface {
-	set(address uint16, value uint32)
-	get(address uint16) uint32
+	Set(address uint16, value uint32)
+	Get(address uint16) uint32
 }
 
 type source interface {
-	get(address uint16, existingVal uint32) uint32
+	Get(address uint16, existingVal uint32) uint32
 }
 
 /*Get will attempt to get a value from an external `source`, while passing it the existing value at
@@ -26,7 +26,7 @@ it will write the value to memory at the 16-bit `address`, and return the value
 to the caller, so that we can pretend the value was always there in memory.
 */
 func (m *UserInputReadMemory) Get(address uint16) uint32 {
-	val := m.source.get(address, m.memory.get(address))
-	m.memory.set(address, val)
+	val := m.source.Get(address, m.memory.Get(address))
+	m.memory.Set(address, val)
 	return val
 }
