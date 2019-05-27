@@ -19,12 +19,12 @@ type RiscVAssembler struct {
 /*Assemble takes a set of string RISC-V `instructions` and converts them into
 32-bit machine code instructions. Errors may occur during assembly*/
 func (assembler *RiscVAssembler) Assemble(instructions string) ([]uint32, error) {
-	tokens, errTokens := assembler.tokenizer.Tokenize(instructions)
+	tokenStream, errTokens := assembler.tokenizer.Tokenize(instructions)
 	if errTokens != nil {
 		return nil, errTokens
 	}
 
-	tree, count, errParse := assembler.parser.Parse(tokens, assembler.lineCount)
+	tree, count, errParse := assembler.parser.Parse(tokenStream, assembler.lineCount)
 	if errParse != nil {
 		return nil, errParse
 	}
@@ -58,16 +58,39 @@ type token interface {
 	GetCharCountSinceNewline() CharCount
 }
 
+type tokenStream interface {
+	Next() token
+	Save() tokenStreamReset
+}
+
+type tokenStreamReset interface {
+	Reset()
+}
+
 type tokenizer interface {
-	Tokenize(tokens string) ([]token, error)
+	Tokenize(tokens string) (tokenStream, error)
 }
 
 type parser interface {
-	Parse(tokens []token, count LineCount) (abstractSyntaxTree, LineCount, error)
+	Parse(tokenStream tokenStream, count LineCount) (abstractSyntaxTree, LineCount, error)
 }
 
 type abstractSyntaxTree interface {
-	blah
+	GetRootIterator() astIterator
+}
+
+type astIterator interface {
+	GetNumChildren() uint
+	GetAstNode() astNode
+	GetParentIterator() (astIterator, error)
+	GetChildIterator(index uint) (astIterator, error)
+}
+
+type astNode interface {
+	GetLineCount()
+	GetCharCountSinceNewline() CharCount
+	GetTokenType() TokenType
+	GetTokenString() string
 }
 
 type codeGenerator interface {
