@@ -51,6 +51,7 @@ type TokenType uint
 const (
 	Label TokenType = iota
 	EndOfInput
+	Newline
 )
 
 type token interface {

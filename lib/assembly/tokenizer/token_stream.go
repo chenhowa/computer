@@ -1,6 +1,9 @@
 package tokenizer
 
 import (
+	"errors"
+	"strings"
+
 	Assembler "github.com/chenhowa/computer/lib/assembly"
 )
 
@@ -23,7 +26,6 @@ func MakeRiscVTokenStream(tokens string) RiscVTokenStream {
 /*Next returns a the next token in the input stream*/
 func (s *RiscVTokenStream) Next() (RiscVToken, error) {
 	if s.hasMoreInput() {
-		s.discardSkippableChars()
 		token, err := s.getNextToken()
 		if err == nil {
 			s.discardSkippableChars()
@@ -42,8 +44,16 @@ func (s *RiscVTokenStream) hasMoreInput() bool {
 }
 
 func (s *RiscVTokenStream) discardSkippableChars() {
-	for char := s.input[s.currentPosition]; !isUnskippableChar(char); s.incrementCurrentPosition() {
+	for char, err := s.getCurrentChar(); err != nil && !isUnskippableChar(char); s.incrementCurrentPosition() {
 	}
+}
+
+func (s *RiscVTokenStream) getCurrentChar() (byte, error) {
+	if s.currentPosition < uint(len(s.input)) {
+		return s.input[s.currentPosition], nil
+	}
+
+	return 0, errors.New("getCurrentChar: past end of input")
 }
 
 func isUnskippableChar(val byte) bool {
@@ -57,6 +67,39 @@ func (s *RiscVTokenStream) incrementCurrentPosition() {
 func (s *RiscVTokenStream) getNextToken() (RiscVToken, error) {
 	//Read one char of the next token at a time until the next skippable char is encountered.
 	// That is the next token, which must be evaluated for being a valid token
+	tokenString := s.getNextTokenString()
+	tokenType, err := getTokenType(tokenString)
+	if err != nil {
+		return RiscVToken{
+			tokenType:             tokenType,
+			token:                 tokenString,
+			charCountSinceNewline: 6,
+		}, nil
+	} else {
+		return RiscVToken{}, err
+	}
+}
+
+func (s *RiscVTokenStream) getNextTokenString() string {
+	s.discardSkippableChars()
+	_, err := s.getCurrentChar()
+	if err != nil {
+		return ""
+	} else {
+		builder := strings.Builder{}
+		for char, err := s.getCurrentChar(); err != nil && continueReadingTokenInput(char); s.incrementCurrentPosition() {
+			builder.WriteByte(char)
+		}
+		return builder.String()
+	}
+}
+
+func continueReadingTokenInput(char byte) bool {
+	return (char != '\n') && isUnskippableChar(char)
+}
+
+func getTokenType(tokenString string) (Assembler.TokenType, error) {
+	sdgfdfsg // definitely need to work out how to get token type from the string
 }
 
 /*Save returns a tokenStreamReset. When the tokenStreamReset is invoked,
