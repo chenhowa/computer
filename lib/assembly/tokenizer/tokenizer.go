@@ -9,7 +9,7 @@ type RiscVTokenizer struct {
 }
 
 type tokenStream interface {
-	Next() token
+	Next() (token, error)
 	Save() tokenStreamReset
 }
 
@@ -24,7 +24,7 @@ type tokenStreamReset interface {
 }
 
 /*Tokenize produces an object with interface `tokenStream`*/
-func (t *RiscVTokenizer) Tokenize(tokens string) tokenStream {
+func (t *RiscVTokenizer) Tokenize(tokens string) *RiscVTokenStream {
 	stream := MakeRiscVTokenStream(tokens)
-	return stream
+	return &stream
 }

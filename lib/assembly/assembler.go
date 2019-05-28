@@ -50,6 +50,7 @@ type TokenType uint
 /*These constants are a TokenType enum for the types of tokens that RISC-V assembly supports*/
 const (
 	Label TokenType = iota
+	EndOfInput
 )
 
 type token interface {
@@ -59,7 +60,8 @@ type token interface {
 }
 
 type tokenStream interface {
-	Next() token
+	HasNext() bool
+	Next() (token, error)
 	Save() tokenStreamReset
 }
 
