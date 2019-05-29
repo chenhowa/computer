@@ -44,16 +44,6 @@ type LineCount uint
 /*CharCount is simply a count of chars that have been encountered so far*/
 type CharCount uint
 
-/*TokenType is an enum for the types of tokens that RISC-V assembly supports*/
-type TokenType uint
-
-/*These constants are a TokenType enum for the types of tokens that RISC-V assembly supports*/
-const (
-	Label TokenType = iota
-	EndOfInput
-	Newline
-)
-
 type token interface {
 	GetTokenType() TokenType
 	GetTokenString() string

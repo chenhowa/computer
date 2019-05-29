@@ -2,6 +2,7 @@ package tokenizer
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	Assembler "github.com/chenhowa/computer/lib/assembly"
@@ -87,19 +88,26 @@ func (s *RiscVTokenStream) getNextTokenString() string {
 		return ""
 	} else {
 		builder := strings.Builder{}
-		for char, err := s.getCurrentChar(); err != nil && continueReadingTokenInput(char); s.incrementCurrentPosition() {
+		for char, err := s.getCurrentChar(); err != nil && continueReadingTokenInput(char, builder.String()); s.incrementCurrentPosition() {
 			builder.WriteByte(char)
 		}
 		return builder.String()
 	}
 }
 
-func continueReadingTokenInput(char byte) bool {
-	return (char != '\n') && isUnskippableChar(char)
+func continueReadingTokenInput(latestChar byte, readInput string) bool {
+	return (latestChar != '\n') && isUnskippableChar(latestChar)
 }
 
 func getTokenType(tokenString string) (Assembler.TokenType, error) {
-	sdgfdfsg // definitely need to work out how to get token type from the string
+	tokenType, ok := mnemonicToToken[Mnemonic(tokenString)]
+	if ok {
+		return tokenType, nil
+	}
+
+	adsfdas
+
+	return tokenType, fmt.Errorf("getTokenType: no token type found for this token %s", tokenString)
 }
 
 /*Save returns a tokenStreamReset. When the tokenStreamReset is invoked,
