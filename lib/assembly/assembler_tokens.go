@@ -5,7 +5,8 @@ type TokenType uint
 
 /*These constants are a TokenType enum for the types of tokens that RISC-V assembly supports*/
 const (
-	Label TokenType = iota
+	Label TokenType = iota + 1 // start at 1 to avoid default initialization match problems
+	Error
 	EndOfInput
 	Newline
 	RDCYCLE

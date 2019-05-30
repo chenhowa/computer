@@ -4,21 +4,24 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"unicode"
 
 	Assembler "github.com/chenhowa/computer/lib/assembly"
 )
 
 /*RiscVTokenStream generates a stream of tokens from a string containing valid RISC-V assembly instructions*/
 type RiscVTokenStream struct {
-	input           string
-	currentPosition uint
+	input                 string
+	currentPosition       uint
+	charsSinceLastNewline uint
 }
 
 /*MakeRiscVTokenStream constructs a RiscVTokenStream*/
 func MakeRiscVTokenStream(tokens string) RiscVTokenStream {
 	stream := RiscVTokenStream{
-		input:           tokens,
-		currentPosition: 0,
+		input:                 tokens,
+		currentPosition:       0,
+		charsSinceLastNewline: 0,
 	}
 
 	return stream
@@ -27,9 +30,10 @@ func MakeRiscVTokenStream(tokens string) RiscVTokenStream {
 /*Next returns a the next token in the input stream*/
 func (s *RiscVTokenStream) Next() (RiscVToken, error) {
 	if s.hasMoreInput() {
-		token, err := s.getNextToken()
+		token, charsRead, err := s.getNextToken()
+		s.updateCharsSinceLastNewline(&token, charsRead)
 		if err == nil {
-			s.discardSkippableChars()
+			s.charsSinceLastNewline += s.discardSkippableChars()
 		}
 		return token, err
 	} else {
@@ -44,9 +48,15 @@ func (s *RiscVTokenStream) hasMoreInput() bool {
 	return s.currentPosition < uint(len(s.input))
 }
 
-func (s *RiscVTokenStream) discardSkippableChars() {
-	for char, err := s.getCurrentChar(); err != nil && !isUnskippableChar(char); s.incrementCurrentPosition() {
+func (s *RiscVTokenStream) discardSkippableChars() (charsDiscarded uint) {
+	charCount := uint(0)
+	char, err := s.getCurrentChar()
+	for err == nil && !isUnskippableChar(char) {
+		charCount++
+		s.incrementCurrentPosition()
+		char, err = s.getCurrentChar()
 	}
+	return charCount
 }
 
 func (s *RiscVTokenStream) getCurrentChar() (byte, error) {
@@ -58,45 +68,60 @@ func (s *RiscVTokenStream) getCurrentChar() (byte, error) {
 }
 
 func isUnskippableChar(val byte) bool {
-	return true
+	if unicode.IsLetter(rune(val)) {
+		return true
+	}
+
+	if val == '\n' {
+		return true
+	}
+
+	return false
 }
 
 func (s *RiscVTokenStream) incrementCurrentPosition() {
 	s.currentPosition++
 }
 
-func (s *RiscVTokenStream) getNextToken() (RiscVToken, error) {
+func (s *RiscVTokenStream) getNextToken() (RiscVToken, uint, error) {
 	//Read one char of the next token at a time until the next skippable char is encountered.
 	// That is the next token, which must be evaluated for being a valid token
-	tokenString := s.getNextTokenString()
+	tokenString, charsRead := s.getNextTokenString()
 	tokenType, err := getTokenType(tokenString)
-	if err != nil {
-		return RiscVToken{
-			tokenType:             tokenType,
-			token:                 tokenString,
-			charCountSinceNewline: 6,
-		}, nil
+	charsSinceLastNewline := Assembler.CharCount(s.charsSinceLastNewline + charsRead - uint(len(tokenString)))
+	if err == nil {
+		token := makeRiscVToken(tokenType, tokenString, charsSinceLastNewline)
+		return token, charsRead, nil
 	} else {
-		return RiscVToken{}, err
+		return makeRiscVToken(Assembler.Error, tokenString, charsSinceLastNewline), charsRead, err
 	}
 }
 
-func (s *RiscVTokenStream) getNextTokenString() string {
-	s.discardSkippableChars()
+func (s *RiscVTokenStream) getNextTokenString() (token string, charsRead uint) {
+	charCount := uint(0)
+	charCount += s.discardSkippableChars()
 	_, err := s.getCurrentChar()
 	if err != nil {
-		return ""
+		return "", charCount
 	} else {
 		builder := strings.Builder{}
-		for char, err := s.getCurrentChar(); err != nil && continueReadingTokenInput(char, builder.String()); s.incrementCurrentPosition() {
+		char, err := s.getCurrentChar()
+		for err == nil && continueReadingTokenInput(char, builder.String()) {
+			charCount++
 			builder.WriteByte(char)
+			s.incrementCurrentPosition()
+			char, err = s.getCurrentChar()
 		}
-		return builder.String()
+		return builder.String(), charCount
 	}
 }
 
 func continueReadingTokenInput(latestChar byte, readInput string) bool {
-	return (latestChar != '\n') && isUnskippableChar(latestChar)
+	return !suddenNewline(readInput, latestChar) && isUnskippableChar(latestChar)
+}
+
+func suddenNewline(readInput string, latestChar byte) bool {
+	return (uint(len(readInput)) > 0) && (latestChar == '\n')
 }
 
 func getTokenType(tokenString string) (Assembler.TokenType, error) {
@@ -105,20 +130,34 @@ func getTokenType(tokenString string) (Assembler.TokenType, error) {
 		return tokenType, nil
 	}
 
-	adsfdas
+	if tokenString == "\n" {
+		return Assembler.Newline, nil
+	}
 
 	return tokenType, fmt.Errorf("getTokenType: no token type found for this token %s", tokenString)
+}
+
+func (s *RiscVTokenStream) updateCharsSinceLastNewline(token *RiscVToken, charsRead uint) {
+	if token.GetTokenType() == Assembler.Newline {
+		s.charsSinceLastNewline = 0
+	} else {
+		s.charsSinceLastNewline += charsRead
+	}
 }
 
 /*Save returns a tokenStreamReset. When the tokenStreamReset is invoked,
 the tokenStream will be restored to its previous position in the input*/
 func (s *RiscVTokenStream) Save() *RiscVTokenStreamReset {
-	reset := makeRiscVTokenStreamReset(s.currentPosition, s)
+	reset := makeRiscVTokenStreamReset(s.currentPosition, s.charsSinceLastNewline, s)
 	return &reset
 }
 
 func (s *RiscVTokenStream) setCurrentInputPosition(position uint) {
 	s.currentPosition = position
+}
+
+func (s *RiscVTokenStream) setCharsSinceLastNewline(count uint) {
+	s.charsSinceLastNewline = count
 }
 
 /*RiscVToken is a token that holds the token type, the token's string,
@@ -159,14 +198,16 @@ func (token *RiscVToken) GetCharCountSinceNewline() Assembler.CharCount {
 /*RiscVTokenStreamReset is a Command Pattern object that contains the ability to reset
 the token stream that produced it to a given position in the input*/
 type RiscVTokenStreamReset struct {
-	inputPosition uint
-	stream        *RiscVTokenStream
+	inputPosition         uint
+	charsSinceLastNewline uint
+	stream                *RiscVTokenStream
 }
 
-func makeRiscVTokenStreamReset(inputPosition uint, stream *RiscVTokenStream) RiscVTokenStreamReset {
+func makeRiscVTokenStreamReset(inputPosition uint, charsSinceLastNewline uint, stream *RiscVTokenStream) RiscVTokenStreamReset {
 	reset := RiscVTokenStreamReset{
-		inputPosition: inputPosition,
-		stream:        stream,
+		inputPosition:         inputPosition,
+		stream:                stream,
+		charsSinceLastNewline: charsSinceLastNewline,
 	}
 	return reset
 }
@@ -175,4 +216,5 @@ func makeRiscVTokenStreamReset(inputPosition uint, stream *RiscVTokenStream) Ris
 at the input position contained within this RiscVTokenStreamReset*/
 func (r *RiscVTokenStreamReset) Reset() {
 	r.stream.setCurrentInputPosition(r.inputPosition)
+	r.stream.setCharsSinceLastNewline(r.charsSinceLastNewline)
 }
