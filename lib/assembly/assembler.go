@@ -24,11 +24,11 @@ func (assembler *RiscVAssembler) Assemble(instructions string) ([]uint32, error)
 		return nil, errTokens
 	}
 
-	tree, count, errParse := assembler.parser.Parse(tokenStream, assembler.lineCount)
+	tree, count, errParse := assembler.parser.Parse(tokenStream)
 	if errParse != nil {
 		return nil, errParse
 	}
-	assembler.lineCount = count
+	assembler.lineCount += count // THIS MIGHT NOT BE CORRECT (off by one)
 
 	binInstructions, errInstructions := assembler.gen.Generate(tree)
 	if errInstructions != nil {
@@ -65,7 +65,7 @@ type tokenizer interface {
 }
 
 type parser interface {
-	Parse(tokenStream tokenStream, count LineCount) (abstractSyntaxTree, LineCount, error)
+	Parse(tokenStream tokenStream) (tree abstractSyntaxTree, linesEncountered LineCount, err error)
 }
 
 type abstractSyntaxTree interface {
