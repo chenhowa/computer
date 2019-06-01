@@ -1,7 +1,6 @@
 package tokenizer
 
 import (
-	"fmt"
 	"strings"
 
 	Assembler "github.com/chenhowa/computer/lib/assembly"
@@ -173,27 +172,6 @@ func (s *RiscVTokenStream) getNextTokenString() (token string, charsRead uint) {
 		}
 		return builder.String(), charCount
 	}
-}
-
-func getTokenType(tokenString string) (Assembler.TokenType, error) {
-	tokenType, ok := mnemonicToToken[Mnemonic(tokenString)]
-	if ok {
-		return tokenType, nil
-	}
-
-	if tokenString == "\n" {
-		return Assembler.Newline, nil
-	}
-
-	if isNumericConstant(tokenString) {
-		return Assembler.NumericConstant, nil
-	}
-
-	if isLabel(tokenString) {
-		return Assembler.Label, nil
-	}
-
-	return tokenType, fmt.Errorf("getTokenType: no token type found for this token %s", tokenString)
 }
 
 func (s *RiscVTokenStream) updateCharsSinceLastNewline(token *RiscVToken, charsRead uint) {

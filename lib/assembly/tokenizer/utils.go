@@ -1,6 +1,7 @@
 package tokenizer
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 	"unicode"
@@ -58,6 +59,10 @@ func cleanTokenString(tokenType Assembler.TokenType, tokenString string) string 
 		return strings.Replace(tokenString, ":", "", -1)
 	}
 
+	if tokenType == Assembler.Register {
+		return strings.Replace(tokenString, "x", "", -1)
+	}
+
 	return tokenString
 }
 
@@ -67,4 +72,36 @@ func continueReadingTokenInput(latestChar byte, readInput string) bool {
 
 func suddenNewline(readInput string, latestChar byte) bool {
 	return (uint(len(readInput)) > 0) && (latestChar == '\n')
+}
+
+func getTokenType(tokenString string) (Assembler.TokenType, error) {
+	tokenType, ok := mnemonicToToken[Mnemonic(tokenString)]
+	if ok {
+		return tokenType, nil
+	}
+
+	if tokenString == "\n" {
+		return Assembler.Newline, nil
+	}
+
+	if isNumericConstant(tokenString) {
+		return Assembler.NumericConstant, nil
+	}
+
+	if isLabel(tokenString) {
+		return Assembler.Label, nil
+	}
+
+	if isRegister(tokenString) {
+		return Assembler.Register, nil
+	}
+
+	return tokenType, fmt.Errorf("getTokenType: no token type found for this token %s", tokenString)
+}
+
+func isRegister(tokenString string) bool {
+	var rg = regexp.MustCompile(`^x(\d|([1-3]\d))$`)
+
+	match := rg.MatchString(tokenString)
+	return match
 }
