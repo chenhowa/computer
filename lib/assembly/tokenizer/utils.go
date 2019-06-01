@@ -42,6 +42,10 @@ func isUnskippableChar(val byte) bool {
 		return true
 	}
 
+	if val == '(' || val == ')' {
+		return true
+	}
+
 	return false
 }
 
@@ -67,7 +71,15 @@ func continueReadingTokenInput(latestChar byte, readInput string) bool {
 }
 
 func suddenNewline(readInput string, latestChar byte) bool {
-	return (uint(len(readInput)) > 0) && (latestChar == '\n')
+	return suddenChar('\n', readInput, latestChar)
+}
+
+func suddenComma(readInput string, latestChar byte) bool {
+	return suddenChar(',', readInput, latestChar)
+}
+
+func suddenChar(char byte, readInput string, latestChar byte) bool {
+	return (uint(len(readInput)) > 0) && (latestChar == char)
 }
 
 func getTokenType(tokenString string) (Assembler.TokenType, error) {
@@ -93,6 +105,10 @@ func getTokenType(tokenString string) (Assembler.TokenType, error) {
 		return tokenType, nil
 	}
 
+	if isRegisterImmediate(tokenString) {
+		return Assembler.RegisterAndImmediate, nil
+	}
+
 	return tokenType, fmt.Errorf("getTokenType: no token type found for this token %s", tokenString)
 }
 
@@ -101,4 +117,12 @@ func isRegister(tokenString string) bool {
 
 	match := rg.MatchString(tokenString)
 	return match
+}
+
+func isRegisterImmediate(tokenString string) bool {
+	numericConstant := `((0)|([1-9]\d*)|([1-9](\d|\d\d)?(,\d\d\d)*))`
+	register := `(\(x(\d|([1-2]\d)|(3[0-1]))\))`
+
+	var rg = regexp.MustCompile(`^` + numericConstant + register + `$`)
+	return rg.MatchString(tokenString)
 }

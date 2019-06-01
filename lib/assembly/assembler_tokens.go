@@ -10,6 +10,7 @@ const (
 	EndOfInput
 	Newline
 	NumericConstant
+	RegisterAndImmediate
 
 	RDCYCLE
 	RDCYCLEH
