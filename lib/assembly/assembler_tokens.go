@@ -9,6 +9,8 @@ const (
 	Error
 	EndOfInput
 	Newline
+	NumericConstant
+
 	RDCYCLE
 	RDCYCLEH
 	RDTIME

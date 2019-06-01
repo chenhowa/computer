@@ -1,10 +1,8 @@
 package tokenizer
 
 import (
-	"errors"
 	"fmt"
 	"strings"
-	"unicode"
 
 	Assembler "github.com/chenhowa/computer/lib/assembly"
 )
@@ -29,19 +27,12 @@ func MakeRiscVTokenStream(tokens string) RiscVTokenStream {
 
 /*Next returns a the next token in the input stream*/
 func (s *RiscVTokenStream) Next() (RiscVToken, error) {
-	if s.hasMoreInput() {
-		token, charsRead, err := s.getNextToken()
-		s.updateCharsSinceLastNewline(&token, charsRead)
-		if err == nil {
-			s.charsSinceLastNewline += s.discardSkippableChars()
-		}
-		return token, err
-	} else {
-		token := RiscVToken{
-			tokenType: Assembler.EndOfInput,
-		}
-		return token, nil
+	token, charsRead, err := s.getNextToken()
+	s.updateCharsSinceLastNewline(&token, charsRead)
+	if err == nil {
+		s.charsSinceLastNewline += s.discardSkippableChars()
 	}
+	return token, err
 }
 
 func (s *RiscVTokenStream) hasMoreInput() bool {
@@ -49,6 +40,29 @@ func (s *RiscVTokenStream) hasMoreInput() bool {
 }
 
 func (s *RiscVTokenStream) discardSkippableChars() (charsDiscarded uint) {
+	charCount := uint(0)
+
+	discarded := s._discardSkippableChars()
+	charCount += discarded
+	for discarded > 0 {
+		discarded = s._discardSkippableChars()
+		charCount += discarded
+	}
+	return charCount
+}
+
+func (s *RiscVTokenStream) _discardSkippableChars() (charsDiscarded uint) {
+	count := uint(0)
+
+	/*discarding should be done in this order, to ensure that comments are removed */
+	count += s.discardMultilineComment()
+	count += s.discardSingleLineComment()
+	count += s.discardSimpleChars()
+
+	return count
+}
+
+func (s *RiscVTokenStream) discardSimpleChars() (charsDiscarded uint) {
 	charCount := uint(0)
 	char, err := s.getCurrentChar()
 	for err == nil && !isUnskippableChar(char) {
@@ -59,28 +73,71 @@ func (s *RiscVTokenStream) discardSkippableChars() (charsDiscarded uint) {
 	return charCount
 }
 
-func (s *RiscVTokenStream) getCurrentChar() (byte, error) {
-	if s.currentPosition < uint(len(s.input)) {
-		return s.input[s.currentPosition], nil
-	}
+func (s *RiscVTokenStream) discardSingleLineComment() (charsDiscarded uint) {
+	charCount := uint(0)
+	char, err := s.getCurrentChar()
+	nextChar, err2 := s.getNextChar()
 
-	return 0, errors.New("getCurrentChar: past end of input")
+	if (err == nil && err2 == nil) && (char == '/' && nextChar == '/') {
+		s.incrementCurrentPosition()
+		s.incrementCurrentPosition()
+		charCount += 2
+		charCount += s.discardThroughSingleLineCommentEnd()
+		return charCount
+	} else {
+		return 0
+	}
 }
 
-func isUnskippableChar(val byte) bool {
-	if unicode.IsLetter(rune(val)) {
-		return true
+func (s *RiscVTokenStream) discardThroughSingleLineCommentEnd() (charsDiscarded uint) {
+	charCount := uint(0)
+	char, err := s.getCurrentChar()
+	for (err == nil) && (char != '\n') {
+		charCount++
+		s.incrementCurrentPosition()
+		char, err = s.getCurrentChar()
 	}
 
-	if val == '\n' {
-		return true
-	}
-
-	return false
+	return charCount
 }
 
-func (s *RiscVTokenStream) incrementCurrentPosition() {
-	s.currentPosition++
+func (s *RiscVTokenStream) discardMultilineComment() (charsDiscarded uint) {
+	charCount := uint(0)
+	char, err := s.getCurrentChar()
+	nextChar, err2 := s.getNextChar()
+
+	if (err == nil && err2 == nil) && (char == '/' && nextChar == '*') {
+		s.incrementCurrentPosition()
+		s.incrementCurrentPosition()
+		charCount += 2
+		charCount += s.discardThroughMultilineCommentEnd()
+		return charCount
+	} else {
+		return 0
+	}
+}
+
+func (s *RiscVTokenStream) discardThroughMultilineCommentEnd() (charsDiscarded uint) {
+	charCount := uint(0)
+	char, err := s.getCurrentChar()
+	nextChar, _ := s.getNextChar()
+
+	for (err == nil) && (char != '*' || nextChar != '/') {
+		charCount++
+		s.incrementCurrentPosition()
+		char, err = s.getCurrentChar()
+		nextChar, _ = s.getNextChar()
+	}
+
+	if char == '*' && nextChar == '/' {
+		s.incrementCurrentPosition()
+		s.incrementCurrentPosition()
+		charCount += 2
+	} else {
+		// we reached end of input. nothing doing.
+	}
+
+	return charCount
 }
 
 func (s *RiscVTokenStream) getNextToken() (RiscVToken, uint, error) {
@@ -90,8 +147,10 @@ func (s *RiscVTokenStream) getNextToken() (RiscVToken, uint, error) {
 	tokenType, err := getTokenType(tokenString)
 	charsSinceLastNewline := Assembler.CharCount(s.charsSinceLastNewline + charsRead - uint(len(tokenString)))
 	if err == nil {
-		token := makeRiscVToken(tokenType, tokenString, charsSinceLastNewline)
+		token := getCleanRiscVToken(tokenType, tokenString, charsSinceLastNewline)
 		return token, charsRead, nil
+	} else if tokenString == "" {
+		return makeRiscVToken(Assembler.EndOfInput, tokenString, charsSinceLastNewline), charsRead, nil
 	} else {
 		return makeRiscVToken(Assembler.Error, tokenString, charsSinceLastNewline), charsRead, err
 	}
@@ -132,6 +191,10 @@ func getTokenType(tokenString string) (Assembler.TokenType, error) {
 
 	if tokenString == "\n" {
 		return Assembler.Newline, nil
+	}
+
+	if isNumericConstant(tokenString) {
+		return Assembler.NumericConstant, nil
 	}
 
 	return tokenType, fmt.Errorf("getTokenType: no token type found for this token %s", tokenString)

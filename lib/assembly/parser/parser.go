@@ -7,6 +7,7 @@ import (
 /*RiscVParser is responsible for parsing Tokens that represent valid syntax in the RISC-V 32I assembly language, and
 organizing them into an abstract tree for later code generation*/
 type RiscVParser struct {
+	lineCount Assembler.LineCount
 }
 
 type tokenStream interface {
@@ -43,12 +44,25 @@ type astNode interface {
 	GetTokenString() string
 }
 
-/*Parse takes a `tokenStream` and a `lineCount` and attempts to parse all the tokens in the stream into an Abstract Syntax Tree representation
-of the RISC-V Assembly Program. If the parse is unsuccessful, it will return a non-nil error `err`
-If the parse is successful, it will return the AST `tree`, as well as a `newLineCount` that represents the number
-of newline tokens that was encountered in the `tokenStream` */
+/*Parse takes a `tokenStream` and attempts to parse all the tokens in the stream into an Abstract Syntax Tree representation
+of the RISC-V Assembly Program. If the parse is unsuccessful, it will return a non-nil error `err`.
+If the parse is successful, it will return the AST `tree`, as well as `linesEncountered`, which represents the number
+of newline tokens that was encountered in the parsing of `tokenStream` */
 func (parser *RiscVParser) Parse(tokenStream tokenStream) (tree RiscVAst, linesEncountered Assembler.LineCount, err error) {
 
+	optionalNewlines() && optionalInstructions() && optionalNewlines()
+}
+
+func optionalInstructions() {
+	noInstructions() || instructions()
+}
+
+func noInstructions() {
+
+}
+
+func instructions() {
+	instruction() && (noInstructions() || (newline() && instructions()))
 }
 
 /*RiscVAst represents an Abstract Syntax Tree of a valid RISC-V 32I Assembly Program*/
