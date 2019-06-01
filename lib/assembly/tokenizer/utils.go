@@ -109,6 +109,11 @@ func getTokenType(tokenString string) (Assembler.TokenType, error) {
 		return Assembler.RegisterAndImmediate, nil
 	}
 
+	tokenType, ok = registerNicknameToToken[RegisterNickname(tokenString)]
+	if ok {
+		return tokenType, nil
+	}
+
 	return tokenType, fmt.Errorf("getTokenType: no token type found for this token %s", tokenString)
 }
 

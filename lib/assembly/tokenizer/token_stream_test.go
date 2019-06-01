@@ -195,11 +195,121 @@ func (suite *RiscVTokenStreamSuite) TestNext_Memory_RegisterImmediatePair_Failur
 	assert.NotEqual(suite.T(), nil, err)
 }
 
-func (suite *RiscVTokenStreamSuite) TestNext_Identifier() {
+func (suite *RiscVTokenStreamSuite) TestNext_RegisterNickname_1() {
+	input := "zero ra sp gp tp t0 t1 t2 s0 fp s1"
+	stream := MakeRiscVTokenStream(input)
+	expected := makeRiscVToken(Assembler.X0, "zero", Assembler.CharCount(0))
+	suite.AssertNextTokenIs(&stream, &expected)
 
+	expected = makeRiscVToken(Assembler.X1, "ra", Assembler.CharCount(uint(len("zero "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X2, "sp", Assembler.CharCount(uint(len("zero ra "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X3, "gp", Assembler.CharCount(uint(len("zero ra sp "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X4, "tp", Assembler.CharCount(uint(len("zero ra sp gp "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X5, "t0", Assembler.CharCount(uint(len("zero ra sp gp tp "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X6, "t1", Assembler.CharCount(uint(len("zero ra sp gp tp t0 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X7, "t2", Assembler.CharCount(uint(len("zero ra sp gp tp t0 t1 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X8, "s0", Assembler.CharCount(uint(len("zero ra sp gp tp t0 t1 t2 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X8, "fp", Assembler.CharCount(uint(len("zero ra sp gp tp t0 t1 t2 s0 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X9, "s1", Assembler.CharCount(uint(len("zero ra sp gp tp t0 t1 t2 s0 fp "))))
+	suite.AssertNextTokenIs(&stream, &expected)
 }
 
-func (suite *RiscVTokenStreamSuite) TestNext_RegisterNickName() {
+func (suite *RiscVTokenStreamSuite) TestNext_RegisterNickname_2() {
+	input := "a0 a1 a2 a3 a4 a5 a6 a7"
+	stream := MakeRiscVTokenStream(input)
+	expected := makeRiscVToken(Assembler.X10, "a0", Assembler.CharCount(0))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X11, "a1", Assembler.CharCount(uint(len("a0 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X12, "a2", Assembler.CharCount(uint(len("a0 a1 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X13, "a3", Assembler.CharCount(uint(len("a0 a1 a2 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X14, "a4", Assembler.CharCount(uint(len("a0 a1 a2 a3 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X15, "a5", Assembler.CharCount(uint(len("a0 a1 a2 a3 a4 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X16, "a6", Assembler.CharCount(uint(len("a0 a1 a2 a3 a4 a5 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X17, "a7", Assembler.CharCount(uint(len("a0 a1 a2 a3 a4 a5 a6 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+}
+
+func (suite *RiscVTokenStreamSuite) TestNext_RegisterNickname_3() {
+	input := "s2 s3 s4 s5 s6 s7 s8 s9 s10 s11"
+	stream := MakeRiscVTokenStream(input)
+	expected := makeRiscVToken(Assembler.X18, "s2", Assembler.CharCount(0))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X19, "s3", Assembler.CharCount(uint(len("s2 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X20, "s4", Assembler.CharCount(uint(len("s2 s3 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X21, "s5", Assembler.CharCount(uint(len("s2 s3 s4 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X22, "s6", Assembler.CharCount(uint(len("s2 s3 s4 s5 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X23, "s7", Assembler.CharCount(uint(len("s2 s3 s4 s5 s6 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X24, "s8", Assembler.CharCount(uint(len("s2 s3 s4 s5 s6 s7 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X25, "s9", Assembler.CharCount(uint(len("s2 s3 s4 s5 s6 s7 s8 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X26, "s10", Assembler.CharCount(uint(len("s2 s3 s4 s5 s6 s7 s8 s9 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X27, "s11", Assembler.CharCount(uint(len("s2 s3 s4 s5 s6 s7 s8 s9 s10 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+}
+
+func (suite *RiscVTokenStreamSuite) TestNext_RegisterNickname_4() {
+	input := "t3 t4 t5 t6"
+	stream := MakeRiscVTokenStream(input)
+	expected := makeRiscVToken(Assembler.X28, "t3", Assembler.CharCount(0))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X29, "t4", Assembler.CharCount(uint(len("t3 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.X30, "t5", Assembler.CharCount(uint(len("t3 t4 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+	expected = makeRiscVToken(Assembler.X31, "t6", Assembler.CharCount(uint(len("t3 t4 t5 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+}
+
+func (suite *RiscVTokenStreamSuite) TestNext_Identifier() {
 
 }
 
