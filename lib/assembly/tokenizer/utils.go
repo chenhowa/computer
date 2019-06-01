@@ -59,10 +59,6 @@ func cleanTokenString(tokenType Assembler.TokenType, tokenString string) string 
 		return strings.Replace(tokenString, ":", "", -1)
 	}
 
-	if tokenType == Assembler.Register {
-		return strings.Replace(tokenString, "x", "", -1)
-	}
-
 	return tokenString
 }
 
@@ -92,8 +88,9 @@ func getTokenType(tokenString string) (Assembler.TokenType, error) {
 		return Assembler.Label, nil
 	}
 
-	if isRegister(tokenString) {
-		return Assembler.Register, nil
+	tokenType, ok = registerToToken[Register(tokenString)]
+	if isRegister(tokenString) && ok {
+		return tokenType, nil
 	}
 
 	return tokenType, fmt.Errorf("getTokenType: no token type found for this token %s", tokenString)

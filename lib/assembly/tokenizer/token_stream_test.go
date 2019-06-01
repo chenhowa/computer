@@ -141,15 +141,31 @@ func (suite *RiscVTokenStreamSuite) TestNext_Labels_Failure() {
 	assert.NotEqual(suite.T(), nil, err)
 }
 
-func (suite *RiscVTokenStreamSuite) TestNext_Registers() {
+func (suite *RiscVTokenStreamSuite) TestNext_Registers_Success() {
 	input := "x0 ADDI"
 	stream := MakeRiscVTokenStream(input)
 
-	expected := makeRiscVToken(Assembler.Register, "0", Assembler.CharCount(0))
+	expected := makeRiscVToken(Assembler.X0, "x0", Assembler.CharCount(0))
 	suite.AssertNextTokenIs(&stream, &expected)
 
 	expected = makeRiscVToken(Assembler.ADDI, string(ADDI), Assembler.CharCount(uint(len("x0 "))))
 	suite.AssertNextTokenIs(&stream, &expected)
+
+	input = "x31 ADDI"
+	stream = MakeRiscVTokenStream(input)
+
+	expected = makeRiscVToken(Assembler.X31, "x31", Assembler.CharCount(0))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.ADDI, string(ADDI), Assembler.CharCount(uint(len("x31 "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+}
+
+func (suite *RiscVTokenStreamSuite) TestNext_Registers_Failure() {
+	input := "x32"
+	stream := MakeRiscVTokenStream(input)
+	_, err := stream.Next()
+	assert.NotEqual(suite.T(), nil, err)
 }
 
 func (suite *RiscVTokenStreamSuite) TestNext_Memory_RegisterImmediatePair() {

@@ -74,3 +74,42 @@ const (
 	BLE        Mnemonic = "BLE"
 	BLEU       Mnemonic = "BLEU"
 )
+
+/*Register represents strings that are valid Registers*/
+type Register string
+
+/*These string constants represent valid registers in RISC-V 32I Assembly Language*/
+const (
+	X0  = "x0"
+	X1  = "x1"
+	X2  = "x2"
+	X3  = "x3"
+	X4  = "x4"
+	X5  = "x5"
+	X6  = "x6"
+	X7  = "x7"
+	X8  = "x8"
+	X9  = "x9"
+	X10 = "x10"
+	X11 = "x11"
+	X12 = "x12"
+	X13 = "x13"
+	X14 = "x14"
+	X15 = "x15"
+	X16 = "x16"
+	X17 = "x17"
+	X18 = "x18"
+	X19 = "x19"
+	X20 = "x20"
+	X21 = "x21"
+	X22 = "x22"
+	X23 = "x23"
+	X24 = "x24"
+	X25 = "x25"
+	X26 = "x26"
+	X27 = "x27"
+	X28 = "x28"
+	X29 = "x29"
+	X30 = "x30"
+	X31 = "x31"
+)
