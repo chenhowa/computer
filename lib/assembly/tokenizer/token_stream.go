@@ -175,14 +175,6 @@ func (s *RiscVTokenStream) getNextTokenString() (token string, charsRead uint) {
 	}
 }
 
-func continueReadingTokenInput(latestChar byte, readInput string) bool {
-	return !suddenNewline(readInput, latestChar) && isUnskippableChar(latestChar)
-}
-
-func suddenNewline(readInput string, latestChar byte) bool {
-	return (uint(len(readInput)) > 0) && (latestChar == '\n')
-}
-
 func getTokenType(tokenString string) (Assembler.TokenType, error) {
 	tokenType, ok := mnemonicToToken[Mnemonic(tokenString)]
 	if ok {
@@ -195,6 +187,10 @@ func getTokenType(tokenString string) (Assembler.TokenType, error) {
 
 	if isNumericConstant(tokenString) {
 		return Assembler.NumericConstant, nil
+	}
+
+	if isLabel(tokenString) {
+		return Assembler.Label, nil
 	}
 
 	return tokenType, fmt.Errorf("getTokenType: no token type found for this token %s", tokenString)

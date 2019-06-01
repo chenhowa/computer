@@ -112,9 +112,58 @@ func (suite *RiscVTokenStreamSuite) TestNext_NumericConstants() {
 	suite.AssertNextTokenIs(&stream, &expected)
 }
 
-func (suite *RiscVTokenStreamSuite) TestNext_Labels() {
-	//Need specific format for validity
-	asdfdasf LABELS NEED TO LOOK UP RISC-V ASSEMBLY FOR THIS
+func (suite *RiscVTokenStreamSuite) TestNext_Labels_Success() {
+	//Need specific format for validity: Capitalized word followed immediately by a colon.
+	input := "Else: ADDI"
+	stream := MakeRiscVTokenStream(input)
+
+	expected := makeRiscVToken(Assembler.Label, string("Else"), Assembler.CharCount(0))
+	suite.AssertNextTokenIs(&stream, &expected)
+
+	expected = makeRiscVToken(Assembler.ADDI, string(ADDI), Assembler.CharCount(uint(len("Else: "))))
+	suite.AssertNextTokenIs(&stream, &expected)
+}
+
+func (suite *RiscVTokenStreamSuite) TestNext_Labels_Failure() {
+	input := "Else:ADDI"
+	stream := MakeRiscVTokenStream(input)
+	_, err := stream.Next()
+	assert.NotEqual(suite.T(), nil, err)
+
+	input = "ELse:"
+	stream = MakeRiscVTokenStream(input)
+	_, err = stream.Next()
+	assert.NotEqual(suite.T(), nil, err)
+
+	input = "else:"
+	stream = MakeRiscVTokenStream(input)
+	_, err = stream.Next()
+	assert.NotEqual(suite.T(), nil, err)
+}
+
+func (suite *RiscVTokenStreamSuite) TestNext_Registers() {
+
+}
+
+func (suite *RiscVTokenStreamSuite) TestNext_Memory_RegisterImmediatePair() {
+
+}
+
+func (suite *RiscVTokenStreamSuite) TestNext_Identifier() {
+
+}
+
+func (suite *RiscVTokenStreamSuite) TestNext_RegisterNickName() {
+
+}
+
+func (suite *RiscVTokenStreamSuite) Test_ReadsThroughMultipleErrors() {
+	/*This test proves the token stream will continue to consume input even when
+	having read an unrecognized token. This way the caller can report multiple errors
+	if necessary. Or should there be a TokenType for unrecognized tokens? Since Error implies
+	that something serious has occurred ... - but error allows a string. So the semantics
+	of this function shoudl be that 'error' is recoverable, which is exactly what I want.
+	So no need for new tokentype.*/
 }
 
 func (suite *RiscVTokenStreamSuite) TestNext_Comments_Multiline() {
