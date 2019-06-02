@@ -10,6 +10,14 @@ type RiscVParser struct {
 	lineCount Assembler.LineCount
 }
 
+/*MakeRiscVParser is a constructor for RiscVParser*/
+func MakeRiscVParser() RiscVParser {
+	parser := RiscVParser{
+		lineCount: 0,
+	}
+	return parser
+}
+
 type tokenStream interface {
 	HasNext() bool
 	Next() (token, error)
@@ -50,11 +58,12 @@ If the parse is successful, it will return the AST `tree`, as well as `linesEnco
 of newline tokens that was encountered in the parsing of `tokenStream` */
 func (parser *RiscVParser) Parse(tokenStream tokenStream) (tree RiscVAst, linesEncountered Assembler.LineCount, err error) {
 
-	optionalNewlines() && optionalInstructions() && optionalNewlines()
+	//optionalNewlines() && optionalInstructions() && optionalNewlines()
+	return RiscVAst{}, 0, nil
 }
 
 func optionalInstructions() {
-	noInstructions() || instructions()
+	//noInstructions() || instructions()
 }
 
 func noInstructions() {
@@ -62,7 +71,7 @@ func noInstructions() {
 }
 
 func instructions() {
-	instruction() && (noInstructions() || (newline() && instructions()))
+	//instruction() && (noInstructions() || (newline() && instructions()))
 }
 
 /*RiscVAst represents an Abstract Syntax Tree of a valid RISC-V 32I Assembly Program*/
