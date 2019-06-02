@@ -11,6 +11,7 @@ const (
 	Newline
 	NumericConstant
 	RegisterAndImmediate
+	Identifier
 
 	RDCYCLE
 	RDCYCLEH

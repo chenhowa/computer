@@ -310,6 +310,10 @@ func (suite *RiscVTokenStreamSuite) TestNext_RegisterNickname_4() {
 }
 
 func (suite *RiscVTokenStreamSuite) TestNext_Identifier() {
+	input := "Else ADDI"
+	stream := MakeRiscVTokenStream(input)
+	expected := makeRiscVToken(Assembler.Identifier, "Else", Assembler.CharCount(uint(0)))
+	suite.AssertNextTokenIs(&stream, &expected)
 
 }
 

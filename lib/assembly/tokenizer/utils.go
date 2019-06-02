@@ -114,6 +114,11 @@ func getTokenType(tokenString string) (Assembler.TokenType, error) {
 		return tokenType, nil
 	}
 
+	// This check should go last, as most things will register as an identifier
+	if isIdentifier(tokenString) {
+		return Assembler.Identifier, nil
+	}
+
 	return tokenType, fmt.Errorf("getTokenType: no token type found for this token %s", tokenString)
 }
 
@@ -129,5 +134,10 @@ func isRegisterImmediate(tokenString string) bool {
 	register := `(\(x(\d|([1-2]\d)|(3[0-1]))\))`
 
 	var rg = regexp.MustCompile(`^` + numericConstant + register + `$`)
+	return rg.MatchString(tokenString)
+}
+
+func isIdentifier(tokenString string) bool {
+	var rg = regexp.MustCompile(`^[A-Za-z]+$`)
 	return rg.MatchString(tokenString)
 }
