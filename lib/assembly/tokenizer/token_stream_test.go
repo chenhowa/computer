@@ -315,15 +315,29 @@ func (suite *RiscVTokenStreamSuite) TestNext_Identifier() {
 	expected := makeRiscVToken(Assembler.Identifier, "Else", Assembler.CharCount(uint(0)))
 	suite.AssertNextTokenIs(&stream, &expected)
 
+	expected = makeRiscVToken(Assembler.ADDI, string(ADDI), Assembler.CharCount(uint(len("Else "))))
+	suite.AssertNextTokenIs(&stream, &expected)
 }
 
 func (suite *RiscVTokenStreamSuite) Test_ReadsThroughMultipleErrors() {
-	/*This test proves the token stream will continue to consume input even when
-	having read an unrecognized token. This way the caller can report multiple errors
-	if necessary. Or should there be a TokenType for unrecognized tokens? Since Error implies
-	that something serious has occurred ... - but error allows a string. So the semantics
-	of this function shoudl be that 'error' is recoverable, which is exactly what I want.
-	So no need for new tokentype.*/
+	assert := assert.New(suite.T())
+	input := "a1234 234a 7655b"
+	stream := MakeRiscVTokenStream(input)
+	expected := makeRiscVToken(Assembler.Error, "a1234", Assembler.CharCount(0))
+	token, _ := stream.Next()
+	assert.Equal(expected, token)
+
+	expected = makeRiscVToken(Assembler.Error, "234a", Assembler.CharCount(uint(len("a1234 "))))
+	token, _ = stream.Next()
+	assert.Equal(expected, token)
+
+	expected = makeRiscVToken(Assembler.Error, "7655b", Assembler.CharCount(uint(len("a1234 234a "))))
+	token, _ = stream.Next()
+	assert.Equal(expected, token)
+
+	expected = makeRiscVToken(Assembler.EndOfInput, "", Assembler.CharCount(uint(len(input))))
+	token, _ = stream.Next()
+	assert.Equal(expected, token)
 }
 
 func (suite *RiscVTokenStreamSuite) TestNext_Comments_Multiline() {
