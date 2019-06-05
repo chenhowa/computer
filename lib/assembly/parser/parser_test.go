@@ -33,5 +33,15 @@ func (suite *RiscVParserSuite) TestSanity_OneFakeToken() {
 }
 
 func (suite *RiscVParserSuite) TestAnd() {
-
+	assert := assert.New(suite.T())
+	var tokens = []MockToken{
+		makeMockToken(Assembler.AND, "AND", 0),
+		makeMockToken(Assembler.X1, "x1", 1),
+		makeMockToken(Assembler.X2, "x2", 2),
+	}
+	stream := makeMockTokenStream(tokens)
+	_, lines, err := suite.parser.Parse(&stream)
+	assert.Equal(uint(0), uint(lines))
+	assert.Equal(nil, err)
+	//assert.Equal(ast.String(), "(AND(x1)(x2))")
 }
