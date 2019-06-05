@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"errors"
+
 	Assembler "github.com/chenhowa/computer/lib/assembly"
 )
 
@@ -20,8 +22,8 @@ func MakeRiscVParser() RiscVParser {
 
 type tokenStream interface {
 	HasNext() bool
-	Next() (token, error)
-	Save() tokenStreamReset
+	Next() (Token, error)
+	Save() TokenStreamReset
 }
 
 type TokenStreamReset interface {
@@ -55,24 +57,27 @@ type astNode interface {
 /*Parse takes a `tokenStream` and attempts to parse all the tokens in the stream into an Abstract Syntax Tree representation
 of the RISC-V Assembly Program. If the parse is unsuccessful, it will return a non-nil error `err`.
 If the parse is successful, it will return the AST `tree`, as well as `linesEncountered`, which represents the number
-of newline tokens that was encountered in the parsing of `tokenStream` */
+of newline tokens that were encountered in the parsing of `tokenStream` */
 func (parser *RiscVParser) Parse(tokenStream tokenStream) (tree RiscVAst, linesEncountered Assembler.LineCount, err error) {
 
 	//optionalNewlines() && optionalInstructions() && optionalNewlines()
-	return RiscVAst{}, 0, nil
+
+	// If no parses succeeded at all, all we can say is that the program could not be parsed
+	return RiscVAst{}, 0, errors.New("Parse: Input program could not be parsed at all")
 }
 
-func optionalInstructions() {
+/*
+func optionalInstructions() (tree RiscVAst, linesEncountered Assembler.LineCount, err error) {
 	//noInstructions() || instructions()
 }
 
-func noInstructions() {
+func noInstructions() (tree RiscVAst, linesEncountered Assembler.LineCount, err error) {
 
 }
 
-func instructions() {
+func instructions() (tree RiscVAst, linesEncountered Assembler.LineCount, err error) {
 	//instruction() && (noInstructions() || (newline() && instructions()))
-}
+}*/
 
 /*RiscVAst represents an Abstract Syntax Tree of a valid RISC-V 32I Assembly Program*/
 type RiscVAst struct{}
