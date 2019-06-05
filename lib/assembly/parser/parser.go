@@ -24,11 +24,11 @@ type tokenStream interface {
 	Save() tokenStreamReset
 }
 
-type tokenStreamReset interface {
+type TokenStreamReset interface {
 	Reset()
 }
 
-type token interface {
+type Token interface {
 	GetTokenType() Assembler.TokenType
 	GetTokenString() string
 	GetCharCountSinceNewline() Assembler.CharCount

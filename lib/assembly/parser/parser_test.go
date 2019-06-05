@@ -21,10 +21,6 @@ func (suite *RiscVParserSuite) SetupTest() {
 	suite.parser = &parser
 }
 
-func (suite *RiscVParserSuite) TestAnd() {
-
-}
-
 type MockTokenStream struct {
 	tokens       []MockToken
 	currentToken uint
@@ -36,6 +32,43 @@ func makeMockTokenStream(tokens []MockToken) MockTokenStream {
 		currentToken: 0,
 	}
 	return stream
+}
+
+func (s *MockTokenStream) HasNext() bool {
+	return s.currentToken < uint(len(s.tokens))
+}
+
+func (s *MockTokenStream) Next() (Token, error) {
+	if s.HasNext() {
+		token := s.tokens[s.currentToken]
+		s.currentToken++
+		return &token, nil
+	} else {
+		end := makeMockToken(Assembler.EndOfInput, "", 0)
+		return &end, nil
+	}
+}
+
+func (s *MockTokenStream) setPosition(position uint) {
+	s.currentToken = position
+}
+
+func (s *MockTokenStream) Save() TokenStreamReset {
+	reset := MockReset{
+		position: s.currentToken,
+		stream:   s,
+	}
+
+	return &reset
+}
+
+type MockReset struct {
+	position uint
+	stream   *MockTokenStream
+}
+
+func (r *MockReset) Reset() {
+	r.stream.setPosition(r.position)
 }
 
 type MockToken struct {
@@ -51,4 +84,28 @@ func makeMockToken(tokenType Assembler.TokenType, tokenString string, count Asse
 		charsSinceNewline: count,
 	}
 	return token
+}
+
+func (t *MockToken) GetTokenType() Assembler.TokenType {
+	return t.tokenType
+}
+
+func (t *MockToken) GetTokenString() string {
+	return t.tokenString
+}
+
+func (t *MockToken) GetCharCountSinceNewline() Assembler.CharCount {
+	return t.charsSinceNewline
+}
+
+func (suite *RiscVParserSuite) TestSanity_OneToken() {
+	var tokens = []MockToken{
+		makeMockToken(Assembler.ADD, "ADD", 0),
+	}
+	stream := makeMockTokenStream(tokens)
+	suite.parser.Parse(&stream)
+}
+
+func (suite *RiscVParserSuite) TestAnd() {
+
 }
