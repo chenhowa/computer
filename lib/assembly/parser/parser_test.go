@@ -32,6 +32,21 @@ func (suite *RiscVParserSuite) TestSanity_OneFakeToken() {
 	assert.Equal("Parse: Input program could not be parsed at all", err.Error())
 }
 
+func (suite *RiscVParserSuite) TestNewlinesParsing() {
+	assert := assert.New(suite.T())
+	var tokens = []MockToken{
+		makeMockToken(Assembler.Newline, "NEW", 0),
+		makeMockToken(Assembler.Newline, "NEW", 0),
+		makeMockToken(Assembler.Newline, "NEW", 0),
+	}
+	stream := makeMockTokenStream(tokens)
+	ast, linecount, err := suite.parser.Parse(&stream)
+	assert.Equal(nil, err)
+	assert.Equal(Assembler.LineCount(3), linecount)
+	assert.Equal("(NEW(NEW(NEW)))", ast.String())
+}
+
+/*
 func (suite *RiscVParserSuite) TestAnd() {
 	assert := assert.New(suite.T())
 	var tokens = []MockToken{
@@ -45,3 +60,4 @@ func (suite *RiscVParserSuite) TestAnd() {
 	assert.Equal(nil, err)
 	//assert.Equal(ast.String(), "(AND(x1)(x2))")
 }
+*/

@@ -89,3 +89,13 @@ type astNode interface {
 type codeGenerator interface {
 	Generate(tree abstractSyntaxTree) ([]uint32, error)
 }
+
+/*AstNodeKind is an alias for uint, representing the kinds of nodes*/
+type AstNodeKind uint
+
+/*These constants represent the kinds of AstNodes that exist*/
+const (
+	Token AstNodeKind = iota
+	Instruction
+	Program
+)

@@ -48,12 +48,13 @@ type abstractSyntaxTree interface {
 /*AstIterator is an interface that represents an iterator over an AST of RiscV Tokens*/
 type AstIterator interface {
 	GetNumChildren() uint
-	GetAstNode() astNode
+	GetAstNode() AstNode
 	GetParentIterator() (AstIterator, error)
 	GetChildIterator(index uint) (AstIterator, error)
 }
 
-type astNode interface {
+/*AstNode is an interface that represents a node in an AST of RiscV Tokens*/
+type AstNode interface {
 	GetLineCount() Assembler.LineCount
 	GetCharCountSinceNewline() Assembler.CharCount
 	GetTokenType() Assembler.TokenType
@@ -67,17 +68,212 @@ of newline tokens that were encountered in the parsing of `tokenStream` */
 func (parser *RiscVParser) Parse(tokenStream tokenStream) (tree RiscVAst, linesEncountered Assembler.LineCount, err error) {
 
 	//optionalNewlines() && optionalInstructions() && optionalNewlines()
+	newlinesAst, newlinesOk := optionalNewlines(tokenStream)
+	if newlinesOk {
+		return newlinesAst, 0, nil
+	}
+
+	//Since it's optional, it doesn't matter whether it succeeded, or failed
+	instructionsAst, instructionsOk := optionalInstructions(tokenStream)
+
+	if instructionsOk {
+		return instructionsAst, 0, nil
+	}
+	/*
+		// Since it's optional, it doesn't matter whether it succeeded, or failed.
+		newlinesAst2, newlinesOk2 := optionalNewlines(tokenStream)
+
+		if newlinesOk || instructionsOk || newlinesOk2 {
+			finalTree := combine(newlinesAst, instructionsAst, newlinesAst2)
+
+			return finalTree, getLineCount(finalTree), nil
+		}*/
 
 	// If no parses succeeded at all, all we can say is that the program could not be parsed
-	ast := RiscVAst{
-		root: RiscVAstNode{
-			parent:    nil,
-			lineCount: 0,
-			//data:     ,
-			children: []RiscVAstNode{},
-		},
+	node := RiscVAstNode{
+		parent:    nil,
+		lineCount: 0,
+		//data:     ,
+		children: []*RiscVAstNode{},
 	}
-	return ast, 0, errors.New("Parse: Input program could not be parsed at all")
+	errorAst := RiscVAst{
+		root: &node,
+	}
+	return errorAst, 0, errors.New("Parse: Input program could not be parsed at all")
+}
+
+func optionalInstructions(stream tokenStream) (tree RiscVAst, success bool) {
+	reset := stream.Save()
+	optionalInstructionsAst, ok := _optionalInstructions(stream)
+
+	if ok {
+		return optionalInstructionsAst, true
+	} else {
+		reset.Reset()
+		return RiscVAst{}, false
+	}
+}
+
+func _optionalInstructions(stream tokenStream) (tree RiscVAst, success bool) {
+	instructionAst, ok := instruction(stream)
+	if ok {
+		newlineAst, ok := newline(stream) // we require a newline between each instruction
+		if ok {
+			_optionalNewlines(stream) // more than 1 newline is acceptable, but not required.
+			remAst, ok := _optionalInstructions(stream)
+			if ok {
+
+			} else {
+				return instructionAst, true
+			}
+		} else {
+			return instructionAst, true
+		}
+
+	} else {
+		return RiscVAst{}, false
+	}
+}
+
+func instruction(stream tokenStream) (tree RiscVAst, success bool) {
+	mnemonicInstructionAst, mnemonicOk := mnemonicInstruction(stream)
+	if mnemonicOk {
+		return mnemonicInstructionAst, true
+	}
+
+	labelInstructionAst, labelOk := labelInstruction(stream)
+
+	if labelOk {
+		return labelInstructionAst, true
+	}
+}
+
+func mnemonicInstruction(stream tokenStream) (tree RiscVAst, success bool) {
+	mnemonicAst, mnemonicOk := mnemonic(stream)
+
+	if !mnemonicOk {
+		return RiscVAst{}, false
+	}
+
+	operand1Ast, operand1Ok := operand(stream)
+
+	if !operand1Ok {
+		return RiscVAst{}, false
+	}
+
+	operand2Ast, operand2Ok := operand(stream)
+
+	if !operand2Ok {
+		return RiscVAst{}, false
+	}
+}
+
+func mnemonic(stream tokenStream) (tree RiscVAst, success bool) {
+	token, tokenErr := stream.Next()
+
+	if tokenErr == nil && isMnemonic(token.GetTokenType()) {
+		node := makeRiscVAstNode(nil, 1, token, Assembler.Token)
+		ast := RiscVAst{
+			root: &node,
+		}
+		return ast, true
+	} else {
+		ast := RiscVAst{}
+		return ast, false
+	}
+}
+
+func operand(stream tokenStream) (tree RiscVAst, success bool) {
+	token, tokenErr := stream.Next()
+
+	if tokenErr == nil && isOperand(token.GetTokenType()) {
+		node := makeRiscVAstNode(nil, 1, token, Assembler.Token)
+		ast := RiscVAst{
+			root: &node,
+		}
+		return ast, true
+	} else {
+		ast := RiscVAst{}
+		return ast, false
+	}
+}
+
+func labelInstruction(stream tokenStream) (tree RiscVAst, success bool) {
+	labelAst, labelOk := label(stream)
+
+	if labelOk {
+		return labelAst, true
+	} else {
+		return RiscVAst{}, false
+	}
+}
+
+func label(stream tokenStream) (tree RiscVAst, success bool) {
+	token, tokenErr := stream.Next()
+
+	if tokenErr == nil && isLabel(token.GetTokenType()) {
+		node := makeRiscVAstNode(nil, 1, token, Assembler.Token)
+		ast := RiscVAst{
+			root: &node,
+		}
+		return ast, true
+	} else {
+		ast := RiscVAst{}
+		return ast, false
+	}
+}
+
+func optionalNewlines(stream tokenStream) (tree RiscVAst, success bool) {
+	reset := stream.Save()
+	optionalNewlinesAst, ok := _optionalNewlines(stream)
+
+	// Since this is optional newlines, as long as there was no stream error,
+	// it is considered a successful parse.
+	if ok {
+		return optionalNewlinesAst, true
+	} else {
+		reset.Reset()
+		return RiscVAst{}, false
+	}
+}
+
+func _optionalNewlines(stream tokenStream) (tree RiscVAst, success bool) {
+	newlineAst, ok := newline(stream)
+	if ok {
+		remAst, ok := _optionalNewlines(stream)
+		if ok {
+			parent := newlineAst.getRootIterator()
+			return addAsChild(newlineAst, parent, remAst), true
+		} else {
+			return newlineAst, true
+		}
+	} else {
+		return RiscVAst{}, false
+	}
+}
+
+func addAsChild(parentTree RiscVAst, nodeToAddAt RiscVAstIterator, childTree RiscVAst) RiscVAst {
+	tree := RiscVAst{
+		root: parentTree.root,
+	}
+
+	nodeToAddAt.addAsNextChild(childTree.root)
+
+	return tree
+}
+
+func newline(stream tokenStream) (tree RiscVAst, success bool) {
+	token, tokenErr := stream.Next()
+	if tokenErr == nil && token.GetTokenType() == Assembler.Newline {
+		node := makeRiscVAstNode(nil, 1, token, Assembler.Token)
+		ast := RiscVAst{
+			root: &node,
+		}
+		return ast, true
+	} else {
+		ast := RiscVAst{}
+		return ast, false
+	}
 }
 
 /*
@@ -95,13 +291,18 @@ func instructions() (tree RiscVAst, linesEncountered Assembler.LineCount, err er
 
 /*RiscVAst represents an Abstract Syntax Tree of a valid RISC-V 32I Assembly Program*/
 type RiscVAst struct {
-	root RiscVAstNode
+	root *RiscVAstNode
 }
 
 /*GetRootIterator returns an iterator to the root node of this AST*/
 func (ast *RiscVAst) GetRootIterator() AstIterator {
-	iter := makeRiscVAstIterator(&ast.root)
+	iter := ast.getRootIterator()
 	return &iter
+}
+
+func (ast *RiscVAst) getRootIterator() RiscVAstIterator {
+	iter := makeRiscVAstIterator(ast.root)
+	return iter
 }
 
 /*String returns the string representation of the AST*/
@@ -113,7 +314,7 @@ func (ast *RiscVAst) String() string {
 
 func convertToString(iter AstIterator) string {
 	var builder strings.Builder
-	builder.WriteString("(" + iter.GetAstNode().GetTokenString() + ")")
+	builder.WriteString("(" + iter.GetAstNode().GetTokenString())
 	for i := uint(0); i < iter.GetNumChildren(); i++ {
 		citer, err := iter.GetChildIterator(i)
 		if err != nil {
@@ -121,6 +322,7 @@ func convertToString(iter AstIterator) string {
 		}
 		builder.WriteString(convertToString(citer))
 	}
+	builder.WriteString(")")
 
 	return builder.String()
 }
@@ -137,19 +339,32 @@ func makeRiscVAstIterator(node *RiscVAstNode) RiscVAstIterator {
 	return iter
 }
 
+func (it *RiscVAstIterator) addAsNextChild(node *RiscVAstNode) {
+	it.node.children = append(it.node.children, node)
+	node.parent = it.getAstNode()
+}
+
 /*GetNumChildren returns the number of children of the node pointed to by this iterator*/
 func (it *RiscVAstIterator) GetNumChildren() uint {
 	return uint(len(it.node.children))
 }
 
 /*GetAstNode returns a pointer to the naked node that this iterator points at*/
-func (it *RiscVAstIterator) GetAstNode() astNode {
+func (it *RiscVAstIterator) GetAstNode() AstNode {
+	return it.getAstNode()
+}
+
+func (it *RiscVAstIterator) getAstNode() *RiscVAstNode {
 	return it.node
 }
 
 /*GetParentIterator returns an iterator to this iterator's node's parent, if it has one
 Otherwise it returns an error*/
 func (it *RiscVAstIterator) GetParentIterator() (AstIterator, error) {
+	return it.getParentIterator()
+}
+
+func (it *RiscVAstIterator) getParentIterator() (*RiscVAstIterator, error) {
 	if it.node.parent != nil {
 		iter := makeRiscVAstIterator(it.node.parent)
 		return &iter, nil
@@ -162,8 +377,12 @@ func (it *RiscVAstIterator) GetParentIterator() (AstIterator, error) {
 /*GetChildIterator returns an iterator to the i'th child of this iterator's node, if it has one.
 Otherwise it returns an error*/
 func (it *RiscVAstIterator) GetChildIterator(index uint) (AstIterator, error) {
+	return it.getChildIterator(index)
+}
+
+func (it *RiscVAstIterator) getChildIterator(index uint) (*RiscVAstIterator, error) {
 	if index < uint(len(it.node.children)) {
-		iter := makeRiscVAstIterator(&it.node.children[index])
+		iter := makeRiscVAstIterator(it.node.children[index])
 		return &iter, nil
 	} else {
 		iter := RiscVAstIterator{}
@@ -177,7 +396,18 @@ type RiscVAstNode struct {
 	parent    *RiscVAstNode
 	lineCount Assembler.LineCount
 	data      Token
-	children  []RiscVAstNode
+	nodeKind  Assembler.AstNodeKind
+	children  []*RiscVAstNode
+}
+
+func makeRiscVAstNode(parent *RiscVAstNode, lineCount Assembler.LineCount, data Token, kind Assembler.AstNodeKind) RiscVAstNode {
+	ast := RiscVAstNode{
+		parent:    parent,
+		lineCount: lineCount,
+		data:      data,
+		children:  []*RiscVAstNode{},
+	}
+	return ast
 }
 
 /*GetLineCount returns the program line of this particular node of the program*/
@@ -199,4 +429,11 @@ func (node *RiscVAstNode) GetTokenType() Assembler.TokenType {
 /*GetTokenString returnst he string of the token within this node*/
 func (node *RiscVAstNode) GetTokenString() string {
 	return node.data.GetTokenString()
+}
+
+/*GetNodeKind returns the kind of the node within the Ast.
+The Node may be a Token node, in which case the internal Token is the data.
+However, if the Node is not a Token, then the internal Token is invalid*/
+func (node *RiscVAstNode) GetNodeKind() Assembler.AstNodeKind {
+	return node.nodeKind
 }
