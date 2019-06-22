@@ -39,4 +39,5 @@ type AstNode interface {
 	GetCharCountSinceNewline() Assembler.CharCount
 	GetTokenType() Assembler.TokenType
 	GetTokenString() string
+	GetNodeKind() Assembler.AstNodeKind
 }

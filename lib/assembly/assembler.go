@@ -97,5 +97,6 @@ type AstNodeKind uint
 const (
 	Token AstNodeKind = iota
 	Instruction
+	Instructions
 	Program
 )
